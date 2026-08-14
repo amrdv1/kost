@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Надіслати звук - KOSTIUCHENKO</title>
+    <title>КОСТЮЧЕНКО</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
@@ -16,7 +17,11 @@
             --accent: #d90000;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             background-color: var(--bg-color);
@@ -41,8 +46,15 @@
         }
 
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h1 {
@@ -76,27 +88,61 @@
             cursor: pointer;
         }
 
-        .pill-element:hover { background-color: var(--btn-hover); }
-        .pill-element:active { transform: scale(0.98); }
+        .pill-element:hover {
+            background-color: var(--btn-hover);
+        }
 
-        input.pill-element { cursor: text; }
-        input.pill-element::placeholder { color: #888; }
+        .pill-element:active {
+            transform: scale(0.98);
+        }
+
+        input.pill-element {
+            cursor: text;
+        }
+
+        input.pill-element::placeholder {
+            color: #888;
+        }
+
         input.pill-element:focus {
             outline: 2px solid var(--text-main);
             background-color: #fff;
         }
 
-        .file-upload-wrapper { width: 100%; position: relative; }
-        .file-upload-input { width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1; }
-        .file-upload-label { margin: 0; }
-        .file-upload-label svg { width: 16px; height: 16px; fill: currentColor; }
+        .file-upload-wrapper {
+            width: 100%;
+            position: relative;
+        }
+
+        .file-upload-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+
+        .file-upload-label {
+            margin: 0;
+        }
+
+        .file-upload-label svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
 
         .submit-btn {
             margin-top: 1rem;
             background-color: var(--text-main);
             color: #ffffff;
         }
-        .submit-btn:hover { background-color: #333; }
+
+        .submit-btn:hover {
+            background-color: #333;
+        }
+
         .submit-btn:disabled {
             background-color: #ccc;
             color: #888;
@@ -112,7 +158,7 @@
             margin-top: 0.5rem;
             text-transform: uppercase;
         }
-        
+
         .price-tag {
             cursor: default;
             pointer-events: none;
@@ -128,29 +174,32 @@
             background: #fff;
             padding: 1.5rem;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             margin-top: 1rem;
         }
-
     </style>
 </head>
+
 <body>
 
     <div class="container">
         <h1>Надіслати звук</h1>
 
         <form id="donation-form" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
-            
+
             <div class="pill-element price-tag">Вартість: 500 ₴</div>
 
             <!-- Звичайні поля -->
             <div id="data-fields" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
                 <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" required autocomplete="off">
-                <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)" autocomplete="off">
+                <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
+                    autocomplete="off">
                 <div class="file-upload-wrapper">
                     <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*" required>
                     <label for="audio" class="pill-element file-upload-label" id="file-label-text">
-                        <svg viewBox="0 0 24 24"><path d="M12 2v12l-4-4-1.4 1.4L12 17.8l5.4-5.4L16 11l-4 4V2z M4 20v2h16v-2z"/></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2v12l-4-4-1.4 1.4L12 17.8l5.4-5.4L16 11l-4 4V2z M4 20v2h16v-2z" />
+                        </svg>
                         <span>ОБРАТИ АУДІО (ДО 20 СЕК)</span>
                     </label>
                 </div>
@@ -168,7 +217,7 @@
 
     <script>
         // === НАЛАШТУВАННЯ ===
-        const API_URL = '/api'; 
+        const API_URL = '/api';
         let stripe;
         let elements;
 
@@ -194,7 +243,7 @@
         const paymentContainer = document.getElementById('payment-container');
         const nameInput = document.getElementById('name');
         const messageInput = document.getElementById('message');
-        
+
         let stripeMode = false;
 
         // UI Файлу
@@ -208,13 +257,13 @@
             }
         }
 
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             handleFileSelection(fileInput.files[0]);
         });
 
         // Drag and Drop
         const dropZone = document.querySelector('.file-upload-wrapper');
-        
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
@@ -248,7 +297,7 @@
         function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            
+
             if (files.length > 0) {
                 fileInput.files = files;
                 handleFileSelection(files[0]);
@@ -274,11 +323,11 @@
             if (stripeMode) {
                 submitBtn.disabled = true;
                 submitBtn.innerText = 'ОБРОБКА ПЛАТЕЖУ...';
-                
+
                 const { error } = await stripe.confirmPayment({
                     elements,
                     confirmParams: {
-                        return_url: window.location.origin + "/client/success.html", 
+                        return_url: window.location.origin + "/client/success.html",
                     },
                 });
 
@@ -346,14 +395,11 @@
                 // Ховаємо інпути, показуємо Stripe
                 dataFields.style.display = 'none';
                 paymentContainer.style.display = 'block';
-                
+
                 // --- РЕАЛЬНИЙ STRIPE КОД ---
-                // elements = stripe.elements({ clientSecret });
-                // const paymentElement = elements.create('payment', { layout: 'accordion' });
-                // paymentElement.mount('#payment-element');
-                
-                // ДЛЯ ДЕМО:
-                document.getElementById('payment-element').innerHTML = "<p style='text-align:center; padding: 2rem; color: #888;'>[Віджет Stripe Apple Pay / Картки]</p>";
+                elements = stripe.elements({ clientSecret });
+                const paymentElement = elements.create('payment', { layout: 'accordion' });
+                paymentElement.mount('#payment-element');
 
                 submitBtn.innerText = 'СПЛАТИТИ 500 ₴';
                 submitBtn.disabled = false;
@@ -368,4 +414,5 @@
         });
     </script>
 </body>
+
 </html>
