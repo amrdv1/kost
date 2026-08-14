@@ -40,6 +40,9 @@ pool.query(`
   -- Add new columns if they don't exist (for migration)
   ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_base64 TEXT;
   ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_type VARCHAR;
+  
+  -- Drop old unused columns
+  ALTER TABLE donations DROP COLUMN IF EXISTS audio_url;
 `).then(() => console.log('Database initialized')).catch(e => console.error('DB Init Error:', e));
 
 // Configure Multer for in-memory file uploads (max 10MB)
