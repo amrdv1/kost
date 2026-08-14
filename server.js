@@ -115,7 +115,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
-       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
+       VALUES ($1, $2, 5, $3, $4) RETURNING id`,
       [name, message || '', base64Audio, mimeType]
     );
 
