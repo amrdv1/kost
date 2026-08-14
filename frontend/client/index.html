@@ -168,11 +168,21 @@
 
     <script>
         // === НАЛАШТУВАННЯ ===
-        const STRIPE_PUBLIC_KEY = 'pk_live_51Kjm6bB6mbY6LOPH6MtseZut9KIRQdXoGY9vfSLukJLSNlTQl61PMPKgzNySGWUitgtrQraCdbqZvPga8PQUiffG00eetNEQkL';
-        const stripe = Stripe(STRIPE_PUBLIC_KEY);
+        const API_URL = '/api'; 
+        let stripe;
         let elements;
 
-        const API_URL = '/api'; // Тепер бекенд і фронтенд на одному сервері!
+        // Fetch Stripe Public Key securely from backend
+        async function initStripe() {
+            try {
+                const res = await fetch(`${API_URL}/config`);
+                const config = await res.json();
+                stripe = Stripe(config.stripePublicKey);
+            } catch (e) {
+                console.error("Failed to load Stripe configuration");
+            }
+        }
+        initStripe();
 
         // === DOM ЕЛЕМЕНТИ ===
         const form = document.getElementById('donation-form');

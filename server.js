@@ -19,6 +19,24 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+// Auto-create table if not exists (so it works on Railway instantly)
+pool.query(`
+  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+  CREATE TABLE IF NOT EXISTS donations (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      stripe_payment_id VARCHAR UNIQUE,
+      customer_name VARCHAR NOT NULL,
+      message TEXT,
+      amount DECIMAL(10, 2) NOT NULL,
+      currency VARCHAR(3) DEFAULT 'UAH',
+      payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
+      audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
+      audio_url TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`).then(() => console.log('Database initialized')).catch(e => console.error('DB Init Error:', e));
+
 // Configure Multer for in-memory file uploads (max 10MB)
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -73,6 +91,11 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
 // JSON middleware for other routes
 app.use(express.json());
+
+// Public config API (so keys are not hardcoded in HTML)
+app.get('/api/config', (req, res) => {
+  res.json({ stripePublicKey: process.env.STRIPE_PUBLIC_KEY });
+});
 
 // Helper function to upload buffer to Cloudinary
 const uploadToCloudinary = (buffer) => {
