@@ -2,22 +2,33 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
 const port = process.env.PORT || 3000;
 
-// Initialize Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL', 
-  process.env.SUPABASE_SERVICE_KEY || 'YOUR_SERVICE_KEY'
-);
+// Initialize PostgreSQL Pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Configure Multer for in-memory file uploads (max 10MB)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // Middleware
 app.use(cors());
 
-// Webhook endpoint needs raw body for Stripe signature verification
+// Webhook endpoint needs raw body
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let stripeEvent;
@@ -29,66 +40,73 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
   if (stripeEvent.type === 'payment_intent.succeeded') {
     const paymentIntent = stripeEvent.data.object;
     const donationId = paymentIntent.metadata.donation_id;
     const paymentId = paymentIntent.id;
 
     if (donationId) {
-      // Update Supabase Database
-      const { data, error } = await supabase
-        .from('donations')
-        .update({
-          stripe_payment_id: paymentId,
-          payment_status: 'PAID',
-          audio_status: 'PENDING_MODERATION',
-          updated_at: new Date()
-        })
-        .eq('id', donationId);
-
-      if (error) {
-        console.error('DB Update Error:', error);
-        return res.status(500).send('Database Error');
+      try {
+        await pool.query(
+          `UPDATE donations SET stripe_payment_id = $1, payment_status = 'PAID', audio_status = 'PENDING_MODERATION', updated_at = NOW() WHERE id = $2`,
+          [paymentId, donationId]
+        );
+        console.log('Payment processed for donation:', donationId);
+        
+        // Notify admins that a new donation needs moderation
+        io.to('admin').emit('new_donation_pending');
+      } catch (err) {
+        console.error('DB Update Error:', err);
       }
-      console.log('Payment processed for donation:', donationId);
     }
   }
-
   res.json({ received: true });
 });
 
 // JSON middleware for other routes
 app.use(express.json());
 
+// Upload API
+app.post('/api/upload', upload.single('audio'), async (req, res) => {
+  try {
+    const { name, message } = req.body;
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ error: 'No audio file provided' });
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    // Convert buffer to base64
+    const base64Audio = file.buffer.toString('base64');
+    const mimeType = file.mimetype;
+
+    const result = await pool.query(
+      `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
+       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
+      [name, message || '', base64Audio, mimeType]
+    );
+
+    res.json({ id: result.rows[0].id });
+  } catch (error) {
+    console.error('Upload Error:', error);
+    res.status(500).json({ error: 'Failed to upload and save donation' });
+  }
+});
+
 // Create Payment Intent API
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency, donation_id } = req.body;
+    const { donation_id } = req.body;
+    if (!donation_id) return res.status(400).json({ error: 'Missing donation_id' });
 
-    if (!amount || !donation_id) {
-      return res.status(400).json({ error: 'Missing amount or donation_id' });
-    }
+    // Check if donation exists
+    const result = await pool.query('SELECT id FROM donations WHERE id = $1', [donation_id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found' });
 
-    // Verify donation exists in Supabase
-    const { data: donation, error: dbError } = await supabase
-      .from('donations')
-      .select('id')
-      .eq('id', donation_id)
-      .single();
-
-    if (dbError || !donation) {
-      return res.status(404).json({ error: 'Donation record not found' });
-    }
-
-    // Create a PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Stripe expects amounts in cents
-      currency: currency || 'uah',
+      amount: 500 * 100, // 500 UAH
+      currency: 'uah',
       metadata: { donation_id: donation_id },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      automatic_payment_methods: { enabled: true },
     });
 
     res.json({ clientSecret: paymentIntent.client_secret });
@@ -98,15 +116,87 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
+// Admin API: Get pending donations
+app.get('/api/admin/pending', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
+       FROM donations WHERE audio_status = 'PENDING_MODERATION' ORDER BY created_at ASC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Admin API: Approve or Reject
+app.post('/api/admin/moderate', async (req, res) => {
+  try {
+    const { donation_id, status } = req.body;
+    if (!['APPROVED', 'REJECTED'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+    const result = await pool.query(
+      `UPDATE donations SET audio_status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, donation_id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found' });
+
+    const updatedDonation = result.rows[0];
+
+    // If approved, notify the live soundboard to play it!
+    if (status === 'APPROVED') {
+      io.emit('play_sound', {
+        id: updatedDonation.id,
+        name: updatedDonation.customer_name,
+        message: updatedDonation.message,
+        audio_base64: updatedDonation.audio_base64,
+        audio_type: updatedDonation.audio_type
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Admin API: Get all approved (for history on soundboard load)
+app.get('/api/live/history', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, customer_name, message, audio_base64, audio_type 
+       FROM donations WHERE audio_status = 'APPROVED' ORDER BY updated_at DESC LIMIT 50`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// WebSockets logic
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  
+  // Admins can join a special room to receive pending donation alerts
+  socket.on('join_admin', () => {
+    socket.join('admin');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Fallback to client/index.html for the root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'client', 'index.html'));
-});
+// Routes
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'index.html')));
+app.get('/live', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'live', 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'client', 'index.html')));
 
-// Start Server
-app.listen(port, () => {
+// Start Server using `server` (not `app`) because of socket.io
+server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });

@@ -196,13 +196,9 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        // const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Uncomment in prod
-
+        const API_URL = '/api';
+        
         let masterVolume = localStorage.getItem('sound_volume') ? parseFloat(localStorage.getItem('sound_volume')) : 1.0;
-        let sounds = [];
-        let hotkeyMap = {};
         
         const volInput = document.getElementById('master-volume');
         volInput.value = masterVolume * 100;
@@ -211,68 +207,57 @@
             localStorage.setItem('sound_volume', masterVolume);
         });
 
-        /* REALTIME LOGIC (UNCOMMENT FOR PROD)
-        function initRealtime() {
-            supabase
-                .channel('public:donations')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'donations' }, payload => {
-                    if (payload.new.audio_status === 'APPROVED') {
-                        const audio = new Audio(payload.new.audio_url);
+        // Fetch initial history
+        async function loadHistory() {
+            try {
+                const res = await fetch(`${API_URL}/live/history`);
+                const sounds = await res.json();
+                
+                const grid = document.getElementById('soundboard');
+                grid.innerHTML = '';
+                
+                sounds.forEach((sound, index) => {
+                    const hotkey = index < 9 ? (index + 1).toString() : null;
+                    const btn = document.createElement('button');
+                    btn.className = 'sound-btn';
+                    btn.innerHTML = `
+                        <div>
+                            <div class="name">${sound.customer_name}</div>
+                            <div class="message">${sound.message || ''}</div>
+                        </div>
+                        ${hotkey ? `<div class="hotkey">KEY: ${hotkey}</div>` : ''}
+                    `;
+                    
+                    const audioSrc = `data:${sound.audio_type};base64,${sound.audio_base64}`;
+                    btn.onclick = () => {
+                        const audio = new Audio(audioSrc);
                         audio.volume = masterVolume;
                         audio.play();
-                        loadSoundboard();
-                    }
-                })
-                .subscribe();
-        }
-
-        async function loadSoundboard() {
-            const { data, error } = await supabase
-                .from('donations')
-                .select('*')
-                .eq('audio_status', 'APPROVED')
-                .order('created_at', { ascending: false });
-                
-            if (error) { console.error('Error', error); return; }
-            sounds = data;
-            
-            const grid = document.getElementById('soundboard');
-            grid.innerHTML = '';
-            hotkeyMap = {};
-
-            sounds.forEach((sound, index) => {
-                const hotkey = index < 9 ? (index + 1).toString() : null;
-                if (hotkey) hotkeyMap[hotkey] = sound.audio_url;
-
-                const btn = document.createElement('button');
-                btn.className = 'sound-btn';
-                btn.innerHTML = `
-                    <div>
-                        <div class="name">${sound.customer_name}</div>
-                        <div class="message">${sound.message || ''}</div>
-                    </div>
-                    ${hotkey ? `<div class="hotkey">KEY: ${hotkey}</div>` : ''}
-                `;
-                btn.onclick = () => {
-                    const audio = new Audio(sound.audio_url);
-                    audio.volume = masterVolume;
-                    audio.play();
-                };
-                grid.appendChild(btn);
-            });
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (hotkeyMap[e.key]) {
-                const audio = new Audio(hotkeyMap[e.key]);
-                audio.volume = masterVolume;
-                audio.play();
+                    };
+                    grid.appendChild(btn);
+                });
+            } catch (err) {
+                console.error("Failed to load history", err);
             }
+        }
+
+        // Initialize Socket.io
+        const socket = io();
+
+        socket.on('play_sound', (data) => {
+            console.log("New sound approved!", data);
+            
+            // Play it immediately
+            const audioSrc = `data:${data.audio_type};base64,${data.audio_base64}`;
+            const audio = new Audio(audioSrc);
+            audio.volume = masterVolume;
+            audio.play();
+
+            // Reload grid
+            loadHistory();
         });
 
-        initRealtime();
-        loadSoundboard();
-        */
+        loadHistory();
     </script>
 </body>
 </html>
