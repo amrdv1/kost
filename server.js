@@ -25,8 +25,16 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+
 // Middleware
 app.use(cors());
+
+// Configure Cloudinary
+cloudinary.config({
+  cloudinary_url: process.env.CLOUDINARY_URL
+});
 
 // Webhook endpoint needs raw body
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -66,6 +74,20 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 // JSON middleware for other routes
 app.use(express.json());
 
+// Helper function to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: 'video', folder: 'donations' }, // audio is treated as video in Cloudinary
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+};
+
 // Upload API
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   try {
@@ -75,14 +97,14 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     if (!file) return res.status(400).json({ error: 'No audio file provided' });
     if (!name) return res.status(400).json({ error: 'Name is required' });
 
-    // Convert buffer to base64
-    const base64Audio = file.buffer.toString('base64');
-    const mimeType = file.mimetype;
+    // Upload to Cloudinary
+    const cloudinaryResult = await uploadToCloudinary(file.buffer);
+    const audioUrl = cloudinaryResult.secure_url;
 
     const result = await pool.query(
-      `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
-       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
-      [name, message || '', base64Audio, mimeType]
+      `INSERT INTO donations (customer_name, message, amount, audio_url) 
+       VALUES ($1, $2, 500, $3) RETURNING id`,
+      [name, message || '', audioUrl]
     );
 
     res.json({ id: result.rows[0].id });
@@ -120,7 +142,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
 app.get('/api/admin/pending', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
+      `SELECT id, customer_name, message, amount, audio_url, created_at 
        FROM donations WHERE audio_status = 'PENDING_MODERATION' ORDER BY created_at ASC`
     );
     res.json(result.rows);
@@ -150,8 +172,7 @@ app.post('/api/admin/moderate', async (req, res) => {
         id: updatedDonation.id,
         name: updatedDonation.customer_name,
         message: updatedDonation.message,
-        audio_base64: updatedDonation.audio_base64,
-        audio_type: updatedDonation.audio_type
+        audio_url: updatedDonation.audio_url
       });
     }
 
@@ -165,7 +186,7 @@ app.post('/api/admin/moderate', async (req, res) => {
 app.get('/api/live/history', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, customer_name, message, audio_base64, audio_type 
+      `SELECT id, customer_name, message, audio_url 
        FROM donations WHERE audio_status = 'APPROVED' ORDER BY updated_at DESC LIMIT 50`
     );
     res.json(result.rows);

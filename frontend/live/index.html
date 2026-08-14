@@ -228,7 +228,7 @@
                         ${hotkey ? `<div class="hotkey">KEY: ${hotkey}</div>` : ''}
                     `;
                     
-                    const audioSrc = `data:${sound.audio_type};base64,${sound.audio_base64}`;
+                    const audioSrc = sound.audio_url;
                     btn.onclick = () => {
                         const audio = new Audio(audioSrc);
                         audio.volume = masterVolume;
@@ -248,7 +248,7 @@
             console.log("New sound approved!", data);
             
             // Play it immediately
-            const audioSrc = `data:${data.audio_type};base64,${data.audio_base64}`;
+            const audioSrc = data.audio_url;
             const audio = new Audio(audioSrc);
             audio.volume = masterVolume;
             audio.play();

@@ -14,9 +14,8 @@ CREATE TABLE IF NOT EXISTS donations (
     payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
     audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
     
-    -- Audio Base64 Data
-    audio_base64 TEXT NOT NULL,
-    audio_type VARCHAR NOT NULL, -- e.g., 'audio/mpeg'
+    -- Audio URL (Cloudinary)
+    audio_url TEXT NOT NULL,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

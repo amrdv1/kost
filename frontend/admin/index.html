@@ -50,12 +50,10 @@
                     const div = document.createElement('div');
                     div.className = 'card';
                     
-                    const audioSrc = `data:${d.audio_type};base64,${d.audio_base64}`;
-
                     div.innerHTML = `
                         <h3>${d.customer_name} - 500 ₴</h3>
                         <p><i>"${d.message}"</i></p>
-                        <audio controls src="${audioSrc}"></audio>
+                        <audio controls src="${d.audio_url}"></audio>
                         <br><br>
                         <button class="btn btn-approve" onclick="moderate('${d.id}', 'APPROVED')">Approve (Send to Stream)</button>
                         <button class="btn btn-reject" onclick="moderate('${d.id}', 'REJECTED')">Reject</button>
