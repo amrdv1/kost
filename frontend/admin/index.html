@@ -7,17 +7,35 @@
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 2rem; background: #f4f4f4; }
-        .card { background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn { padding: 0.5rem 1rem; cursor: pointer; border: none; border-radius: 4px; color: white; margin-right: 0.5rem; font-weight: bold; }
-        .btn-approve { background: #28a745; }
-        .btn-reject { background: #dc3545; }
+        body { font-family: 'Montserrat', sans-serif; padding: 0; margin: 0; background: #f4f4f4; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fff; }
+        #login-screen input { padding: 1rem; margin: 0.5rem; width: 300px; border: 2px solid #ccc; border-radius: 10px; font-size: 1rem; font-weight: bold; }
+        #login-screen button { padding: 1rem; width: 320px; background: #d90000; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 1rem; }
+        #admin-panel { display: none; padding: 2rem; }
+        
+        .card { background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .btn { padding: 0.8rem 1.5rem; cursor: pointer; border: none; border-radius: 8px; color: white; margin-right: 0.5rem; font-weight: bold; font-size: 1rem; }
+        .btn-approve { background: #000; }
+        .btn-reject { background: #d90000; }
     </style>
 </head>
 <body>
-    <h1>Pending Audio Approvals</h1>
-    <p>Incoming sounds from Stripe will appear here for you to approve.</p>
-    <div id="donations">Loading...</div>
+
+    <!-- ЕКРАН ЛОГІНУ -->
+    <div id="login-screen">
+        <h1 style="color: #d90000; margin-bottom: 2rem;">ВХІД (АДМІН)</h1>
+        <input type="text" id="username" placeholder="Логін">
+        <input type="password" id="password" placeholder="Пароль">
+        <button onclick="login()">УВІЙТИ</button>
+        <p id="login-error" style="color: #d90000; margin-top: 1rem; display: none;">Невірний логін або пароль!</p>
+    </div>
+
+    <!-- АДМІН ПАНЕЛЬ -->
+    <div id="admin-panel">
+        <h1>Модерація звуків</h1>
+        <p>Звуки, що очікують підтвердження після оплати.</p>
+        <div id="donations">Завантаження...</div>
+    </div>
 
     <script>
         const API_URL = '/api';
@@ -33,9 +51,39 @@
             loadPending();
         });
 
+        function getAuthHeader() {
+            return { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') };
+        }
+
+        function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if (u.trim().toLowerCase() === 'костюченко' && p.trim() !== '') {
+                localStorage.setItem('admin_token', p.trim());
+                loadPending();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
         async function loadPending() {
             try {
-                const res = await fetch(`${API_URL}/admin/pending`);
+                const res = await fetch(`${API_URL}/admin/pending`, { headers: getAuthHeader() });
+                
+                if (res.status === 401) {
+                    // Unauthorized
+                    document.getElementById('login-screen').style.display = 'flex';
+                    document.getElementById('admin-panel').style.display = 'none';
+                    document.getElementById('login-error').style.display = 'block';
+                    localStorage.removeItem('admin_token');
+                    return;
+                }
+
+                // Authorized
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('login-error').style.display = 'none';
+
                 const donations = await res.json();
                 
                 const container = document.getElementById('donations');
@@ -70,19 +118,35 @@
 
         async function moderate(id, status) {
             try {
-                await fetch(`${API_URL}/admin/moderate`, {
+                const res = await fetch(`${API_URL}/admin/moderate`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ donation_id: id, status: status })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ donation_id: id, status })
                 });
-                loadPending();
+                
+                if (res.status === 401) {
+                    alert('Сесія закінчилась. Увійдіть ще раз.');
+                    loadPending();
+                    return;
+                }
+
+                if(res.ok) {
+                    loadPending();
+                } else {
+                    alert('Помилка сервера');
+                }
             } catch (err) {
                 console.error(err);
-                alert('Error updating status');
             }
         }
 
-        loadPending();
+        // Check if already logged in on load
+        if (localStorage.getItem('admin_token')) {
+            loadPending();
+        }
     </script>
 </body>
 </html>

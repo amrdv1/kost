@@ -150,8 +150,17 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
+// Admin Auth Middleware
+const adminAuth = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth || auth !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
+
 // Admin API: Get pending donations
-app.get('/api/admin/pending', async (req, res) => {
+app.get('/api/admin/pending', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
@@ -163,8 +172,8 @@ app.get('/api/admin/pending', async (req, res) => {
   }
 });
 
-// Admin API: Approve or Reject
-app.post('/api/admin/moderate', async (req, res) => {
+// Admin API: Moderate donation
+app.post('/api/admin/moderate', adminAuth, async (req, res) => {
   try {
     const { donation_id, status } = req.body;
     if (!['APPROVED', 'REJECTED'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
