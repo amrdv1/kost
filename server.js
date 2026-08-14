@@ -49,11 +49,6 @@ const streamifier = require('streamifier');
 // Middleware
 app.use(cors());
 
-// Configure Cloudinary
-cloudinary.config({
-  cloudinary_url: process.env.CLOUDINARY_URL
-});
-
 // Webhook endpoint needs raw body
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -97,11 +92,27 @@ app.get('/api/config', (req, res) => {
   res.json({ stripePublicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
+// Configure Cloudinary explicitly from URL
+if (process.env.CLOUDINARY_URL) {
+  try {
+    const cloudinaryUrl = process.env.CLOUDINARY_URL.trim();
+    // Format: cloudinary://api_key:api_secret@cloud_name
+    const url = new URL(cloudinaryUrl);
+    cloudinary.config({
+      cloud_name: url.hostname,
+      api_key: url.username,
+      api_secret: url.password
+    });
+  } catch (err) {
+    console.error("Failed to parse CLOUDINARY_URL:", err.message);
+  }
+}
+
 // Helper function to upload buffer to Cloudinary
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: 'video', folder: 'donations' }, // audio is treated as video in Cloudinary
+      { resource_type: 'auto', folder: 'donations' }, // 'auto' handles audio, video, images
       (error, result) => {
         if (error) reject(error);
         else resolve(result);
