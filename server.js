@@ -31,11 +31,15 @@ pool.query(`
       currency VARCHAR(3) DEFAULT 'UAH',
       payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
       audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
-      audio_base64 TEXT NOT NULL,
-      audio_type VARCHAR NOT NULL,
+      audio_base64 TEXT,
+      audio_type VARCHAR,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
+  
+  -- Add new columns if they don't exist (for migration)
+  ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_base64 TEXT;
+  ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_type VARCHAR;
 `).then(() => console.log('Database initialized')).catch(e => console.error('DB Init Error:', e));
 
 // Configure Multer for in-memory file uploads (max 10MB)
