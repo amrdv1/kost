@@ -31,7 +31,8 @@ pool.query(`
       currency VARCHAR(3) DEFAULT 'UAH',
       payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
       audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
-      audio_url TEXT NOT NULL,
+      audio_base64 TEXT NOT NULL,
+      audio_type VARCHAR NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
@@ -92,36 +93,6 @@ app.get('/api/config', (req, res) => {
   res.json({ stripePublicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
-// Configure Cloudinary explicitly from URL
-if (process.env.CLOUDINARY_URL) {
-  try {
-    const cloudinaryUrl = process.env.CLOUDINARY_URL.trim();
-    // Format: cloudinary://api_key:api_secret@cloud_name
-    const url = new URL(cloudinaryUrl);
-    cloudinary.config({
-      cloud_name: url.hostname,
-      api_key: url.username,
-      api_secret: url.password
-    });
-  } catch (err) {
-    console.error("Failed to parse CLOUDINARY_URL:", err.message);
-  }
-}
-
-// Helper function to upload buffer to Cloudinary
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: 'auto', folder: 'donations' }, // 'auto' handles audio, video, images
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
-};
-
 // Upload API
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   try {
@@ -131,14 +102,14 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     if (!file) return res.status(400).json({ error: 'No audio file provided' });
     if (!name) return res.status(400).json({ error: 'Name is required' });
 
-    // Upload to Cloudinary
-    const cloudinaryResult = await uploadToCloudinary(file.buffer);
-    const audioUrl = cloudinaryResult.secure_url;
+    // Convert buffer directly to base64
+    const base64Audio = file.buffer.toString('base64');
+    const mimeType = file.mimetype;
 
     const result = await pool.query(
-      `INSERT INTO donations (customer_name, message, amount, audio_url) 
-       VALUES ($1, $2, 500, $3) RETURNING id`,
-      [name, message || '', audioUrl]
+      `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
+       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
+      [name, message || '', base64Audio, mimeType]
     );
 
     res.json({ id: result.rows[0].id });
@@ -176,7 +147,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
 app.get('/api/admin/pending', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, customer_name, message, amount, audio_url, created_at 
+      `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
        FROM donations WHERE audio_status = 'PENDING_MODERATION' ORDER BY created_at ASC`
     );
     res.json(result.rows);
@@ -206,7 +177,8 @@ app.post('/api/admin/moderate', async (req, res) => {
         id: updatedDonation.id,
         name: updatedDonation.customer_name,
         message: updatedDonation.message,
-        audio_url: updatedDonation.audio_url
+        audio_base64: updatedDonation.audio_base64,
+        audio_type: updatedDonation.audio_type
       });
     }
 
@@ -220,7 +192,7 @@ app.post('/api/admin/moderate', async (req, res) => {
 app.get('/api/live/history', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, customer_name, message, audio_url 
+      `SELECT id, customer_name, message, audio_base64, audio_type 
        FROM donations WHERE audio_status = 'APPROVED' ORDER BY updated_at DESC LIMIT 50`
     );
     res.json(result.rows);

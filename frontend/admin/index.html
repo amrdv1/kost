@@ -46,17 +46,20 @@
                     return;
                 }
 
-                donations.forEach(d => {
+                donations.forEach(donation => {
                     const div = document.createElement('div');
                     div.className = 'card';
-                    
                     div.innerHTML = `
-                        <h3>${d.customer_name} - 500 ₴</h3>
-                        <p><i>"${d.message}"</i></p>
-                        <audio controls src="${d.audio_url}"></audio>
-                        <br><br>
-                        <button class="btn btn-approve" onclick="moderate('${d.id}', 'APPROVED')">Approve (Send to Stream)</button>
-                        <button class="btn btn-reject" onclick="moderate('${d.id}', 'REJECTED')">Reject</button>
+                        <p><strong>Від кого:</strong> ${donation.customer_name}</p>
+                        <p><strong>Сума:</strong> ${donation.amount} ₴</p>
+                        <p><strong>Повідомлення:</strong> ${donation.message || '—'}</p>
+                        <audio controls style="width: 100%; margin-top: 10px;">
+                            <source src="data:${donation.audio_type};base64,${donation.audio_base64}" type="${donation.audio_type}">
+                        </audio>
+                        <div class="actions">
+                            <button class="btn btn-approve" onclick="moderate('${donation.id}', 'APPROVED')">Схвалити</button>
+                            <button class="btn btn-reject" onclick="moderate('${donation.id}', 'REJECTED')">Відхилити</button>
+                        </div>
                     `;
                     container.appendChild(div);
                 });
