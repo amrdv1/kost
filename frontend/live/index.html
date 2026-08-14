@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Soundboard - KOSTIUCHENKO</title>
+    <!-- Load Supabase JS Client for Realtime -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent: #ffffff;
+            --border: rgba(255, 255, 255, 0.15);
+            --border-hover: rgba(255, 255, 255, 0.5);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 3rem;
+            min-height: 100vh;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 50% 0%, rgba(30,30,30,0.6) 0%, rgba(5,5,5,1) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #control-panel {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 { 
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900;
+            text-transform: uppercase; 
+            letter-spacing: -0.02em; 
+            margin-bottom: 0.5rem;
+        }
+        
+        p.subtitle {
+            font-size: 1rem;
+            font-weight: 300;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 3rem;
+        }
+        
+        .soundboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .sound-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 1.5rem;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+        }
+        
+        .sound-btn::after {
+            content: "";
+            position: absolute;
+            bottom: 0; left: 0; right: 0; height: 0;
+            background: var(--text-main);
+            transition: height 0.3s ease;
+            z-index: -1;
+        }
+        
+        .sound-btn:hover { 
+            border-color: var(--accent); 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .sound-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .sound-btn .name { 
+            font-weight: 900; 
+            font-size: 1.2rem; 
+            text-transform: uppercase; 
+            margin-bottom: 0.5rem; 
+            letter-spacing: 0.05em;
+        }
+        
+        .sound-btn .message {
+            color: var(--text-muted); 
+            margin-bottom: 1rem; 
+            font-style: italic;
+            font-weight: 300;
+            font-size: 0.9rem;
+        }
+
+        .sound-btn .hotkey { 
+            font-size: 0.75rem; 
+            color: var(--bg-color); 
+            background: var(--text-main);
+            padding: 0.2rem 0.5rem;
+            align-self: flex-start;
+            font-weight: 700;
+            border-radius: 2px;
+        }
+        
+        .volume-control { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            background: rgba(255,255,255,0.03);
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--border);
+            width: fit-content;
+        }
+        
+        .volume-control label {
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+        }
+
+        /* Custom range slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 150px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--text-main);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <h1>Live Soundboard</h1>
+        <p class="subtitle">Realtime synced with approved donations</p>
+
+        <div class="volume-control">
+            <label for="master-volume">Master Volume</label>
+            <input type="range" id="master-volume" min="0" max="100" value="100">
+        </div>
+
+        <div class="soundboard-grid" id="soundboard">
+            <!-- Demo buttons if no DB -->
+            <button class="sound-btn" onclick="alert('Playing demo sound!')">
+                <div>
+                    <div class="name">KIRIL</div>
+                    <div class="message">"Bruh"</div>
+                </div>
+                <div class="hotkey">KEY: 1</div>
+            </button>
+            <button class="sound-btn" onclick="alert('Playing demo sound!')">
+                <div>
+                    <div class="name">ALEX</div>
+                    <div class="message">"Wow"</div>
+                </div>
+                <div class="hotkey">KEY: 2</div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        // const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Uncomment in prod
+
+        let masterVolume = localStorage.getItem('sound_volume') ? parseFloat(localStorage.getItem('sound_volume')) : 1.0;
+        let sounds = [];
+        let hotkeyMap = {};
+        
+        const volInput = document.getElementById('master-volume');
+        volInput.value = masterVolume * 100;
+        volInput.addEventListener('input', (e) => {
+            masterVolume = e.target.value / 100;
+            localStorage.setItem('sound_volume', masterVolume);
+        });
+
+        /* REALTIME LOGIC (UNCOMMENT FOR PROD)
+        function initRealtime() {
+            supabase
+                .channel('public:donations')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'donations' }, payload => {
+                    if (payload.new.audio_status === 'APPROVED') {
+                        const audio = new Audio(payload.new.audio_url);
+                        audio.volume = masterVolume;
+                        audio.play();
+                        loadSoundboard();
+                    }
+                })
+                .subscribe();
+        }
+
+        async function loadSoundboard() {
+            const { data, error } = await supabase
+                .from('donations')
+                .select('*')
+                .eq('audio_status', 'APPROVED')
+                .order('created_at', { ascending: false });
+                
+            if (error) { console.error('Error', error); return; }
+            sounds = data;
+            
+            const grid = document.getElementById('soundboard');
+            grid.innerHTML = '';
+            hotkeyMap = {};
+
+            sounds.forEach((sound, index) => {
+                const hotkey = index < 9 ? (index + 1).toString() : null;
+                if (hotkey) hotkeyMap[hotkey] = sound.audio_url;
+
+                const btn = document.createElement('button');
+                btn.className = 'sound-btn';
+                btn.innerHTML = `
+                    <div>
+                        <div class="name">${sound.customer_name}</div>
+                        <div class="message">${sound.message || ''}</div>
+                    </div>
+                    ${hotkey ? `<div class="hotkey">KEY: ${hotkey}</div>` : ''}
+                `;
+                btn.onclick = () => {
+                    const audio = new Audio(sound.audio_url);
+                    audio.volume = masterVolume;
+                    audio.play();
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (hotkeyMap[e.key]) {
+                const audio = new Audio(hotkeyMap[e.key]);
+                audio.volume = masterVolume;
+                audio.play();
+            }
+        });
+
+        initRealtime();
+        loadSoundboard();
+        */
+    </script>
+</body>
+</html>

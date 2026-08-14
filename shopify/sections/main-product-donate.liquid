@@ -1,0 +1,192 @@
+{% schema %}
+{
+  "name": "Sound Donation",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Sound Donation"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .sound-donation-wrapper {
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .sound-donation-container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+  .sound-donation-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+  }
+  .sound-donation-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .donation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: left;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .form-group label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-group input, .form-group textarea {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    border-radius: 0;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: #fff;
+  }
+  
+  /* Variant Selector (Amount) */
+  .amount-selector {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .amount-option {
+    flex: 1;
+  }
+  .amount-option input[type="radio"] {
+    display: none;
+  }
+  .amount-option label {
+    display: block;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+  }
+  .amount-option input[type="radio"]:checked + label {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+
+  .submit-btn {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-top: 2rem;
+    transition: transform 0.1s ease;
+  }
+  .submit-btn:hover {
+    background: #e6e6e6;
+  }
+  .submit-btn:active {
+    transform: scale(0.98);
+  }
+  
+  /* Uploadery specific styling overrides */
+  #uploadery-container {
+    margin-top: 1rem;
+    border: 1px dashed rgba(255,255,255,0.3);
+    padding: 1.5rem;
+    text-align: center;
+  }
+</style>
+
+<div class="sound-donation-wrapper">
+  <div class="sound-donation-container">
+    <h1 class="sound-donation-title">Send a Sound</h1>
+    <p class="sound-donation-subtitle">Choose your donation amount and send a sound to the stream.</p>
+
+    <form method="post" action="/cart/add" id="sound-donation-form" class="donation-form" enctype="multipart/form-data">
+      
+      <!-- Variant Selector -->
+      <div class="form-group">
+        <label>Select Amount</label>
+        <div class="amount-selector">
+          {% for variant in product.variants %}
+            <div class="amount-option">
+              <input type="radio" id="variant-{{ variant.id }}" name="id" value="{{ variant.id }}" {% if forloop.first %}checked{% endif %}>
+              <label for="variant-{{ variant.id }}">{{ variant.price | money }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Line Item Properties -->
+      <div class="form-group">
+        <label for="donation-name">Name</label>
+        <input type="text" id="donation-name" name="properties[Name]" placeholder="Your name (e.g. KIRIL)" required>
+      </div>
+
+      <div class="form-group">
+        <label for="donation-message">Message</label>
+        <textarea id="donation-message" name="properties[Message]" rows="2" placeholder="Optional message for the stream"></textarea>
+      </div>
+
+      <!-- Uploadery Container -->
+      <div class="form-group">
+        <label>Audio File (Max 20s, MP3/WAV/OGG)</label>
+        <!-- Uploadery automatically injects its UI into the form based on product ID, but we can provide a container if needed. -->
+        <div id="uploadery-container">
+          <p style="color: #888; font-size: 0.9rem;">Uploadery button will appear here</p>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="donate-submit-btn">Buy / Send</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById('sound-donation-form');
+    
+    form.addEventListener('submit', function(e) {
+      // Basic Frontend Validation for Uploadery if needed.
+      // Uploadery handles the actual file upload and adds the URL to a hidden input field 'properties[_uploadery_url]' (or similar).
+      // If we could access the file object here, we would check duration. 
+      // Since Uploadery processes it via their iframe/UI, we rely on Backend validation for hard duration limits.
+      
+      const submitBtn = document.getElementById('donate-submit-btn');
+      submitBtn.innerText = 'Processing...';
+      submitBtn.disabled = true;
+    });
+  });
+</script>

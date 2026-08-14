@@ -1,0 +1,13 @@
+{
+  "name": "Sound Donation",
+  "wrapper": "div",
+  "sections": {
+    "main": {
+      "type": "main-product-donate",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

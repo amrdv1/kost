@@ -1,0 +1,12 @@
+{
+  "name": "sound-donation-backend",
+  "version": "1.0.0",
+  "description": "Backend for Sound Donation System",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "stripe": "^14.14.0"
+  }
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Moderation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+        }
+        .donation-card {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            max-width: 600px;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .name { font-weight: 700; font-size: 1.2rem; text-transform: uppercase; }
+        .amount { color: #3ED660; font-weight: 700; }
+        .message { margin-bottom: 1.5rem; color: rgba(255, 255, 255, 0.8); font-style: italic; }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        button {
+            padding: 0.8rem 1.5rem;
+            font-family: inherit;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.8; }
+        .btn-play { background: #fff; color: #000; }
+        .btn-approve { background: #3ED660; color: #000; }
+        .btn-reject { background: #8B0000; color: #fff; }
+        
+        audio {
+            width: 100%;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sound Moderation</h1>
+    <div id="donations-container">
+        <p>Loading pending donations...</p>
+    </div>
+
+    <script>
+        const API_BASE = 'https://YOUR_NETLIFY_DOMAIN.netlify.app/api/admin/donations';
+        const ADMIN_SECRET = 'YOUR_SECRET_HERE'; // Replace with a login mechanism in prod
+
+        async function fetchDonations() {
+            try {
+                const res = await fetch(API_BASE, {
+                    headers: { 'Authorization': `Bearer ${ADMIN_SECRET}` }
+                });
+                const donations = await res.json();
+                renderDonations(donations);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('donations-container').innerHTML = '<p>Error loading donations.</p>';
+            }
+        }
+
+        function renderDonations(donations) {
+            const container = document.getElementById('donations-container');
+            if (donations.length === 0) {
+                container.innerHTML = '<p>No pending sounds.</p>';
+                return;
+            }
+
+            container.innerHTML = donations.map(d => `
+                <div class="donation-card" id="donation-${d.id}">
+                    <div class="header-row">
+                        <div class="name">${d.customer_name}</div>
+                        <div class="amount">£${d.amount}</div>
+                    </div>
+                    <div class="message">"${d.message}"</div>
+                    
+                    <audio id="audio-${d.id}" controls src="${d.audio_url}"></audio>
+                    
+                    <div class="controls">
+                        <button class="btn-play" onclick="document.getElementById('audio-${d.id}').style.display='block'; document.getElementById('audio-${d.id}').play()">Play</button>
+                        <button class="btn-approve" onclick="handleAction('${d.id}', 'approve')">Approve</button>
+                        <button class="btn-reject" onclick="handleAction('${d.id}', 'reject')">Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleAction(id, action) {
+            try {
+                await fetch(`${API_BASE}/${id}/${action}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${ADMIN_SECRET}` }
+                });
+                document.getElementById(`donation-${id}`).remove();
+                
+                // If container is empty after removal
+                if(document.getElementById('donations-container').children.length === 0) {
+                    document.getElementById('donations-container').innerHTML = '<p>No pending sounds.</p>';
+                }
+            } catch (err) {
+                alert('Error updating status');
+            }
+        }
+
+        // Init
+        fetchDonations();
+    </script>
+</body>
+</html>
