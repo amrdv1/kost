@@ -133,7 +133,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     res.json({ id: result.rows[0].id });
   } catch (error) {
     console.error('Upload Error:', error);
-    res.status(500).json({ error: 'Failed to upload and save donation' });
+    res.status(500).json({ error: error.message || 'Failed to upload and save donation' });
   }
 });
 

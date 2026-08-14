@@ -324,7 +324,10 @@
                     body: formData
                 });
 
-                if (!uploadRes.ok) throw new Error('Помилка завантаження файлу');
+                if (!uploadRes.ok) {
+                    const errData = await uploadRes.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Помилка завантаження файлу');
+                }
                 const uploadData = await uploadRes.json();
                 const donationId = uploadData.id;
 
