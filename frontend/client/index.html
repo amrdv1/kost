@@ -210,7 +210,12 @@
                         ЗАПИС (ДО 20С)
                     </button>
                 </div>
-                <audio id="preview-audio" controls style="width: 100%; display: none; border-radius: 50px; height: 40px; outline: none;"></audio>
+                <div id="preview-container" style="display: none; align-items: center; gap: 10px; width: 100%;">
+                    <audio id="preview-audio" controls style="flex: 1; border-radius: 50px; height: 40px; outline: none;"></audio>
+                    <button type="button" id="clear-audio-btn" style="background: var(--accent); color: white; border: none; border-radius: 50px; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Stripe Контейнер -->
@@ -270,9 +275,20 @@
         const messageInput = document.getElementById('message');
         const recordBtn = document.getElementById('record-btn');
         const previewAudio = document.getElementById('preview-audio');
+        const previewContainer = document.getElementById('preview-container');
+        const clearAudioBtn = document.getElementById('clear-audio-btn');
 
         let stripeMode = false;
         let recordedFile = null;
+
+        // Очищення аудіо
+        clearAudioBtn.addEventListener('click', () => {
+            recordedFile = null;
+            fileInput.value = '';
+            previewContainer.style.display = 'none';
+            previewAudio.src = '';
+            fileLabel.querySelector('span').innerText = 'ОБРАТИ АУДІО (ДО 20С)';
+        });
 
         // UI Файлу
         function handleFileSelection(file) {
@@ -284,10 +300,10 @@
                 // Show preview for selected file
                 const audioUrl = URL.createObjectURL(file);
                 previewAudio.src = audioUrl;
-                previewAudio.style.display = 'block';
+                previewContainer.style.display = 'flex';
             } else {
-                fileLabel.innerText = 'ОБРАТИ АУДІО (ДО 20С)';
-                previewAudio.style.display = 'none';
+                fileLabel.querySelector('span').innerText = 'ОБРАТИ АУДІО (ДО 20С)';
+                previewContainer.style.display = 'none';
                 previewAudio.src = '';
             }
         }
@@ -364,7 +380,7 @@
                     // Show preview for recorded file
                     const audioUrl = URL.createObjectURL(audioBlob);
                     previewAudio.src = audioUrl;
-                    previewAudio.style.display = 'block';
+                    previewContainer.style.display = 'flex';
                     
                     recordBtn.innerHTML = `
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
