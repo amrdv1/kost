@@ -83,7 +83,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         console.log('Payment processed & instantly approved for donation:', donationId);
         
         // Fetch the donation details to broadcast
-        const resDonation = await pool.query(`SELECT id, customer_name, message, audio_base64, audio_type FROM donations WHERE id = $1`, [donationId]);
+        const resDonation = await pool.query(`SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at FROM donations WHERE id = $1`, [donationId]);
         if (resDonation.rowCount > 0) {
           // Notify clients that a new sound is ready to play
           io.emit('new_approved_sound', resDonation.rows[0]);
@@ -212,7 +212,7 @@ app.post('/api/admin/moderate', adminAuth, async (req, res) => {
 app.get('/api/live/history', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, customer_name, message, audio_base64, audio_type 
+      `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
        FROM donations WHERE audio_status = 'APPROVED' ORDER BY updated_at DESC LIMIT 50`
     );
     res.json(result.rows);
