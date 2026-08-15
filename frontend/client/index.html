@@ -210,6 +210,7 @@
                         ЗАПИС (ДО 20С)
                     </button>
                 </div>
+                <audio id="preview-audio" controls style="width: 100%; display: none; border-radius: 50px; height: 40px; outline: none;"></audio>
             </div>
 
             <!-- Stripe Контейнер -->
@@ -268,6 +269,7 @@
         const nameInput = document.getElementById('name');
         const messageInput = document.getElementById('message');
         const recordBtn = document.getElementById('record-btn');
+        const previewAudio = document.getElementById('preview-audio');
 
         let stripeMode = false;
         let recordedFile = null;
@@ -278,8 +280,15 @@
                 const fileName = file.name;
                 const shortName = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
                 fileLabel.innerText = shortName.toUpperCase();
+                
+                // Show preview for selected file
+                const audioUrl = URL.createObjectURL(file);
+                previewAudio.src = audioUrl;
+                previewAudio.style.display = 'block';
             } else {
                 fileLabel.innerText = 'ОБРАТИ АУДІО (ДО 20С)';
+                previewAudio.style.display = 'none';
+                previewAudio.src = '';
             }
         }
 
@@ -351,6 +360,11 @@
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     recordedFile = new File([audioBlob], "recorded_audio.webm", { type: 'audio/webm' });
                     fileInput.value = ''; // очищаємо файл інпут
+                    
+                    // Show preview for recorded file
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    previewAudio.src = audioUrl;
+                    previewAudio.style.display = 'block';
                     
                     recordBtn.innerHTML = `
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
