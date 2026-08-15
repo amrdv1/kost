@@ -414,6 +414,26 @@
                 if (count >= 50) {
                     showError('ЛІМІТ ЗВУКІВ (50/50) ВИЧЕРПАНО!');
                 }
+
+                // Check for payment error redirect
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('payment_error') === 'true') {
+                    showError('ОПЛАТА НЕ ПРОЙШЛА АБО БУЛА СКАСОВАНА');
+                    // Remove the parameter from URL to not show it again on refresh
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                // Restore saved inputs
+                if (localStorage.getItem('don_name')) {
+                    document.getElementById('name').value = localStorage.getItem('don_name');
+                }
+                if (localStorage.getItem('don_message')) {
+                    document.getElementById('message').value = localStorage.getItem('don_message');
+                }
+                if (localStorage.getItem('don_amount')) {
+                    document.getElementById('amount').value = localStorage.getItem('don_amount');
+                    if (typeof updateAudioState === 'function') updateAudioState();
+                }
             } catch (err) {
                 console.error('Failed to load init data', err);
             }
@@ -467,7 +487,13 @@
             }
         }
 
-        amountInput.addEventListener('input', updateAudioState);
+        amountInput.addEventListener('input', () => {
+            updateAudioState();
+            localStorage.setItem('don_amount', amountInput.value);
+        });
+        nameInput.addEventListener('input', () => localStorage.setItem('don_name', nameInput.value));
+        messageInput.addEventListener('input', () => localStorage.setItem('don_message', messageInput.value));
+
         updateAudioState(); // init
 
         fileUploadWrapper.addEventListener('click', (e) => {
