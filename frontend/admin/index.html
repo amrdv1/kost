@@ -597,7 +597,12 @@
                     color = 'var(--accent)';
                 }
                 
-                let optionsHtml = statusOptions.map(opt => `<option value="${opt}" ${opt.toUpperCase() === vUpper ? 'selected' : ''}>${opt}</option>`).join('');
+                let optionsList = statusOptions;
+                if (item.id === 'cover' || item.id === 'video') {
+                    optionsList = ["Готово", "В процесі"];
+                }
+
+                let optionsHtml = optionsList.map(opt => `<option value="${opt}" ${opt.toUpperCase() === vUpper ? 'selected' : ''}>${opt}</option>`).join('');
                 
                 container.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0;">
