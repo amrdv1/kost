@@ -374,8 +374,23 @@
             <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
         </div>
 
-        <div class="feed" id="sound-grid">
-            <div class="empty-state">Завантаження...</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <h2 style="text-align: center; color: var(--accent); font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВУКОВІ ДОНАТИ</h2>
+                <div class="feed" id="voice-feed">
+                    <div class="empty-state">Завантаження...</div>
+                </div>
+            </div>
+            <div>
+                <h2 style="text-align: center; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВИЧАЙНІ ДОНАТИ</h2>
+                <div class="feed" id="normal-feed">
+                    <div class="empty-state">Завантаження...</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 4rem; margin-bottom: 2rem; font-weight: 700; color: #888; font-size: 0.9rem;">
+            Прийняти участь на <a href="https://KOSTIUCHENKO.CO.UK" style="color: var(--text-main); text-decoration: none; border-bottom: 2px solid var(--text-main);">KOSTIUCHENKO.CO.UK</a>
         </div>
     </div>
 
@@ -528,7 +543,9 @@
         }
 
         function addSoundToGrid(sound, isNew = false) {
-            const grid = document.getElementById('sound-grid');
+            const isSoundDonation = sound.amount >= 500 && sound.audio_base64;
+            const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
+            const grid = document.getElementById(targetGridId);
 
             // Remove empty state if present
             const emptyState = grid.querySelector('.empty-state');
@@ -581,19 +598,19 @@
                 const res = await fetch(`${API_URL}/admin/history?t=${new Date().getTime()}`);
                 const sounds = await res.json();
 
-                const grid = document.getElementById('sound-grid');
-                grid.innerHTML = '';
+                const voiceGrid = document.getElementById('voice-feed');
+                const normalGrid = document.getElementById('normal-feed');
+                
+                const emptyHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.5 0-4.5-2-4.5-4.5h2c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5h2c0 2.5-2 4.5-4.5 4.5zm2-5.5H10V9h4v2z"/></svg>
+                        <h3>Поки що тихо</h3>
+                        <p>Тут з'являться звуки від ваших глядачів</p>
+                    </div>
+                `;
 
-                if (sounds.length === 0) {
-                    grid.innerHTML = `
-                        <div class="empty-state">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.5 0-4.5-2-4.5-4.5h2c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5h2c0 2.5-2 4.5-4.5 4.5zm2-5.5H10V9h4v2z"/></svg>
-                            <h3>Поки що тихо</h3>
-                            <p>Тут з'являться звуки від ваших глядачів</p>
-                        </div>
-                    `;
-                    return;
-                }
+                voiceGrid.innerHTML = emptyHTML;
+                normalGrid.innerHTML = emptyHTML;
 
                 // Add a small delay for stagger effect
                 sounds.forEach((sound, index) => {
