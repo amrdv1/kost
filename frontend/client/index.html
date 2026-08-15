@@ -655,11 +655,13 @@
 
             try {
                 // Перевірка
-                const duration = await getAudioDuration(file);
-                if (duration > 21) { // 21 to allow minor discrepancies over 20s
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'ПРОДОВЖИТИ';
-                    return showError('АУДІО ДОВШЕ 20 СЕКУНД!');
+                if (file) {
+                    const duration = await getAudioDuration(file);
+                    if (duration > 21) { // 21 to allow minor discrepancies over 20s
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'ПРОДОВЖИТИ';
+                        return showError('АУДІО ДОВШЕ 20 СЕКУНД!');
+                    }
                 }
 
                 submitBtn.innerText = 'ЗАВАНТАЖЕННЯ...';
