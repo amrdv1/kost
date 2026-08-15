@@ -221,17 +221,34 @@
         let stripe;
         let elements;
 
-        // Fetch Stripe Public Key securely from backend
-        async function initStripe() {
+        async function init() {
             try {
-                const res = await fetch(`${API_URL}/config`);
-                const config = await res.json();
-                stripe = Stripe(config.stripePublicKey);
-            } catch (e) {
-                console.error("Failed to load Stripe configuration");
+                // Config
+                const resConfig = await fetch(`${API_URL}/config`);
+                const dataConfig = await resConfig.json();
+                if (dataConfig.stripePublicKey) {
+                    stripe = Stripe(dataConfig.stripePublicKey);
+                }
+
+                // Status limit check
+                const resStatus = await fetch(`${API_URL}/status`);
+                const dataStatus = await resStatus.json();
+                if (dataStatus.count >= 100) {
+                    const btn = document.getElementById('submit-btn');
+                    btn.innerText = 'ЛІМІТ ВИЧЕРПАНО (100/100)';
+                    btn.disabled = true;
+                    btn.style.background = '#888';
+                    btn.style.color = '#fff';
+                    btn.style.cursor = 'not-allowed';
+                    document.getElementById('audio').disabled = true;
+                    document.getElementById('name').disabled = true;
+                    document.getElementById('message').disabled = true;
+                }
+            } catch (err) {
+                console.error('Failed to load init data', err);
             }
         }
-        initStripe();
+        init();
 
         // === DOM ЕЛЕМЕНТИ ===
         const form = document.getElementById('donation-form');

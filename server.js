@@ -104,6 +104,17 @@ app.get('/api/config', (req, res) => {
   res.json({ stripePublicKey: process.env.STRIPE_PUBLIC_KEY });
 });
 
+// Status API to check limit
+app.get('/api/status', async (req, res) => {
+  try {
+    const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED'`);
+    const count = parseInt(countRes.rows[0].count, 10);
+    res.json({ count, max: 100 });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // Upload API
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   try {
@@ -112,6 +123,12 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 
     if (!file) return res.status(400).json({ error: 'No audio file provided' });
     if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    // 100 sound limit check
+    const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED'`);
+    if (parseInt(countRes.rows[0].count, 10) >= 100) {
+      return res.status(400).json({ error: 'ЛІМІТ ВИЧЕРПАНО! (100/100)' });
+    }
 
     // Convert buffer directly to base64
     const base64Audio = file.buffer.toString('base64');
