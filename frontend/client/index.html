@@ -177,6 +177,91 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             margin-top: 1rem;
         }
+
+        /* Premium UI Additions */
+        .progress-wrapper {
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        #progress-text {
+            font-weight: 900;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+        }
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff4b2b 0%, var(--accent) 100%);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .amount-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+        .amount-wrapper input {
+            width: 100%;
+            background: #fff;
+            border: 2px solid transparent;
+            border-radius: 40px;
+            padding: 1.5rem 3rem;
+            font-size: 2.2rem;
+            font-weight: 900;
+            text-align: center;
+            color: #000;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+        .amount-wrapper input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(255,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .amount-wrapper input::placeholder {
+            color: #ccc;
+        }
+        .amount-wrapper .currency-symbol {
+            position: absolute;
+            right: 2rem;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #aaa;
+            pointer-events: none;
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.04);
+            color: #555;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem auto;
+            align-self: center;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -185,20 +270,23 @@
     <div class="container">
         <h1>Надіслати звук</h1>
 
-        <div style="margin-bottom: 1.5rem;">
-            <div id="progress-text" style="font-weight: 900; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase;">ЗАПОВНЕНО 0 З 50 ЗВУКІВ</div>
-            <div style="width: 100%; height: 12px; background: #eee; border-radius: 10px; overflow: hidden; border: 1px solid #ccc;">
-                <div id="progress-fill" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.5s ease;"></div>
+        <div class="progress-wrapper">
+            <div id="progress-text">ЗАПОВНЕНО 0 З 50 ЗВУКІВ</div>
+            <div class="progress-track">
+                <div id="progress-fill"></div>
             </div>
         </div>
 
         <form id="donation-form" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
 
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="number" id="amount" class="pill-element" placeholder="СУМА ДОНАТУ (₴)" min="50" style="font-size: 1.2rem; font-weight: 900; text-align: center; color: var(--accent);" required autocomplete="off">
-                <div style="text-align: center; font-size: 0.8rem; font-weight: 700; opacity: 0.8;">
-                    МІНІМУМ 50 ₴. ЩОБ ВІДПРАВИТИ ЗВУК НА СТРІМ - ВІД 500 ₴.
-                </div>
+            <div class="amount-wrapper">
+                <input type="number" id="amount" placeholder="500" min="50" required autocomplete="off">
+                <div class="currency-symbol">₴</div>
+            </div>
+            
+            <div class="info-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <span>Мінімум 50 ₴. Щоб відправити звук на стрім — від 500 ₴.</span>
             </div>
 
             <!-- Звичайні поля -->
@@ -631,8 +719,8 @@
         });
     </script>
     
-    <div style="text-align: center; margin-top: 2rem; font-weight: 700; opacity: 0.5;">
-        Прийняти участь на <a href="https://KOSTIUCHENKO.CO.UK" style="color: var(--text-main); text-decoration: none;">KOSTIUCHENKO.CO.UK</a>
+    <div style="text-align: center; margin-top: 2rem; font-weight: 700; color: #888; font-size: 0.9rem;">
+        Прийняти участь на <a href="https://KOSTIUCHENKO.CO.UK" style="color: var(--text-main); text-decoration: none; border-bottom: 2px solid var(--text-main);">KOSTIUCHENKO.CO.UK</a>
     </div>
 </body>
 
