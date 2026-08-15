@@ -305,37 +305,34 @@
 
         .mute-btn {
             position: fixed;
-            bottom: 30px;
-            left: 30px;
+            bottom: 20px;
+            right: 20px;
             z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 54px;
-            height: 54px;
-            background: #ffffff;
-            color: var(--text-main);
-            border-radius: 50%;
+            background: transparent;
+            color: rgba(0, 0, 0, 0.15);
             border: none;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: color 0.3s ease;
             outline: none;
+            padding: 10px;
         }
         
         .mute-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            color: rgba(0, 0, 0, 0.4);
         }
         
         .mute-btn.muted {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 4px 12px rgba(217, 0, 0, 0.3);
+            background: transparent;
+            color: rgba(0, 0, 0, 0.15);
+            box-shadow: none;
         }
         
         .mute-btn.muted:hover {
-            box-shadow: 0 6px 18px rgba(217, 0, 0, 0.4);
+            color: rgba(0, 0, 0, 0.4);
+            box-shadow: none;
         }
 
         .empty-state {
