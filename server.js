@@ -112,7 +112,8 @@ app.get('/api/status', async (req, res) => {
 });
 
 // Profanity filter utility
-const badWordsRegex = new RegExp('(ху[йяеё]|пизд|еба[тлн]|ёба|бля[дт]|шлюх|сук[аи]|пидор|гондон|гандон|мудак|залуп|дроч)', 'gi');
+const badWordsRegex = new RegExp('(ху[йяеёи]|пизд|еба[тлн]|ёба|бля[дт]|шлюх|сук[аи]|пидор|пидар|педик|гондон|гандон|мудак|залуп|дроч|хуе|чмо|говн|гавн|уеб|долбо|манд|лох)', 'gi');
+const urlRegex = /(https?:\/\/|www\.|[a-zA-Z0-9-]+\.(com|ru|ua|net|org|me|co|live|io|uk))/i;
 
 function filterProfanity(text) {
   if (!text) return text;
@@ -127,6 +128,12 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     const donationAmount = parseInt(amount, 10);
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
+    if (name.length > 50) return res.status(400).json({ error: 'Ім\'я занадто довге (макс 50 символів)' });
+    if (urlRegex.test(name)) return res.status(400).json({ error: 'Посилання заборонені!' });
+    
+    if (message && message.length > 250) return res.status(400).json({ error: 'Повідомлення занадто довге (макс 250 символів)' });
+    if (message && urlRegex.test(message)) return res.status(400).json({ error: 'Посилання заборонені!' });
+
     if (isNaN(donationAmount) || donationAmount < 20) return res.status(400).json({ error: 'Мінімальна сума 20 грн' });
 
     if (donationAmount >= 500 && !file) {

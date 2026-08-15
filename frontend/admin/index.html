@@ -372,9 +372,14 @@
             
             <!-- Left Side: History -->
             <div style="flex: 1; min-width: 0;">
-                <div class="header" style="text-align: left; margin-bottom: 2rem; padding-bottom: 0;">
-                    <h1 style="font-size: 2.5rem;">ІСТОРІЯ ДОНАТІВ</h1>
-                    <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
+                <div class="header" style="text-align: left; margin-bottom: 2rem; padding-bottom: 0; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 style="font-size: 2.5rem;">ІСТОРІЯ ДОНАТІВ</h1>
+                        <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
+                    </div>
+                    <button id="mute-btn" onclick="toggleMute()" style="background: var(--text-main); color: white; padding: 12px 24px; border-radius: 30px; border: none; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        🔊 ЗВУК УВІМКНЕНО
+                    </button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
@@ -425,6 +430,22 @@
 
         // Volume control
         let masterVolume = 1.0;
+        let isMuted = false;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('mute-btn');
+            if (isMuted) {
+                masterVolume = 0.0;
+                btn.innerText = '🔇 ЗВУК ВИМКНЕНО';
+                btn.style.background = 'var(--accent)';
+                if (window.speechSynthesis) window.speechSynthesis.cancel(); // Stop current speech
+            } else {
+                masterVolume = 1.0;
+                btn.innerText = '🔊 ЗВУК УВІМКНЕНО';
+                btn.style.background = 'var(--text-main)';
+            }
+        }
 
         // --- WEB AUDIO API FOR NOTIFICATIONS ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -498,14 +519,16 @@
                 }, 1500);
             } else {
                 // TEXT TO SPEECH for normal donations
-                setTimeout(() => {
-                    const msg = data.message ? data.message : 'Дякую за донат!';
-                    const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
-                    utterance.lang = 'uk-UA';
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-                    window.speechSynthesis.speak(utterance);
-                }, 1000);
+                if (!isMuted) {
+                    setTimeout(() => {
+                        const msg = data.message ? data.message : 'Дякую за донат!';
+                        const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
+                        utterance.lang = 'uk-UA';
+                        utterance.rate = 1.0;
+                        utterance.pitch = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                    }, 1000);
+                }
             }
 
             // Keep alerting state active for 20 seconds, then process next in queue
