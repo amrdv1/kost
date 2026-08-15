@@ -618,10 +618,26 @@
             processQueue();
         });
 
-        // Initialize user interaction for AudioContext (browsers block audio until click)
+        // Try to automatically resume AudioContext and Speech without clicks (OBS allows this naturally)
+        const tryUnlockAudio = () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+            // Prime the Speech API with silent utterance to unlock it
+            if (window.speechSynthesis && !window.speechSynthesis.speaking) {
+                const u = new SpeechSynthesisUtterance('');
+                u.volume = 0;
+                window.speechSynthesis.speak(u);
+            }
+        };
+        tryUnlockAudio();
+        // Keep trying to unlock in case Chrome MEI allows it later
+        setInterval(tryUnlockAudio, 5000);
+        
+        // Fallback: unlock on any click just in case
         document.body.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }, { once: true });
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        });
 
         function login() {
             const u = document.getElementById('username').value;
