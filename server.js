@@ -127,7 +127,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     const donationAmount = parseInt(amount, 10);
 
     if (!name) return res.status(400).json({ error: 'Name is required' });
-    if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
+    if (isNaN(donationAmount) || donationAmount < 20) return res.status(400).json({ error: 'Мінімальна сума 20 грн' });
 
     if (donationAmount >= 500 && !file) {
       return res.status(400).json({ error: 'Для донату від 500 грн необхідно прикріпити звук' });
