@@ -21,28 +21,25 @@ const pool = new Pool({
 
 // Auto-create table if not exists (so it works on Railway instantly)
 pool.query(`
-  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
   CREATE TABLE IF NOT EXISTS donations (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      stripe_payment_id VARCHAR UNIQUE,
-      customer_name VARCHAR NOT NULL,
-      message TEXT,
-      amount DECIMAL(10, 2) NOT NULL,
-      currency VARCHAR(3) DEFAULT 'UAH',
-      payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
-      audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
-      audio_base64 TEXT,
-      audio_type VARCHAR,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stripe_payment_id VARCHAR UNIQUE,
+    customer_name VARCHAR NOT NULL,
+    message TEXT,
+    amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'UAH',
+    payment_status VARCHAR NOT NULL DEFAULT 'PENDING' CHECK (payment_status IN ('PENDING', 'PAID', 'FAILED')),
+    audio_status VARCHAR NOT NULL DEFAULT 'PENDING_PAYMENT' CHECK (audio_status IN ('PENDING_PAYMENT', 'PENDING_MODERATION', 'APPROVED', 'REJECTED')),
+    audio_base64 TEXT,
+    audio_type VARCHAR,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
   
-  -- Add new columns if they don't exist (for migration)
-  ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_base64 TEXT;
-  ALTER TABLE donations ADD COLUMN IF NOT EXISTS audio_type VARCHAR;
-  
-  -- Drop old unused columns
-  ALTER TABLE donations DROP COLUMN IF EXISTS audio_url;
+  CREATE TABLE IF NOT EXISTS album_settings (
+    item_key VARCHAR PRIMARY KEY,
+    item_value VARCHAR NOT NULL
+  );
 `).then(() => console.log('Database initialized')).catch(e => console.error('DB Init Error:', e));
 
 // Configure Multer for in-memory file uploads (max 10MB)
@@ -241,6 +238,34 @@ app.get('/api/admin/history', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Admin API: Get album settings
+app.get('/api/admin/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT item_key, item_value FROM album_settings');
+    const settings = {};
+    result.rows.forEach(r => settings[r.item_key] = r.item_value);
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Admin API: Update album settings
+app.post('/api/admin/settings', async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    await pool.query(
+      `INSERT INTO album_settings (item_key, item_value) VALUES ($1, $2)
+       ON CONFLICT (item_key) DO UPDATE SET item_value = EXCLUDED.item_value`,
+      [key, value]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Database error' });
   }
 });

@@ -405,19 +405,8 @@
                     </p>
 
                     <h4 style="margin: 0 0 1rem 0; text-transform: uppercase; color: #888; font-size: 0.9rem;">СТАТУС АЛЬБОМУ:</h4>
-                    <div style="display: flex; flex-direction: column; gap: 0.8rem; font-weight: 700; font-size: 0.95rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 1</span> <span style="color: var(--accent); font-size: 0.85rem; text-transform: uppercase; background: rgba(217,0,0,0.1); padding: 2px 8px; border-radius: 10px;">Готово</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 2</span> <span style="color: var(--accent); font-size: 0.85rem; text-transform: uppercase; background: rgba(217,0,0,0.1); padding: 2px 8px; border-radius: 10px;">Зведення</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 3</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Запис вокалу</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 4</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Аранжування</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 5</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Демо</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 6</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Демо</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Трек 7</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Ідея</span></div>
-                        
-                        <div style="border-top: 2px solid rgba(0,0,0,0.05); margin: 0.5rem 0;"></div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Обкладинка</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">В процесі</span></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;"><span>Кліп</span> <span style="color: #888; font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px;">Планування</span></div>
+                    <div id="album-status-list" style="display: flex; flex-direction: column; gap: 0.8rem; font-weight: 700; font-size: 0.95rem;">
+                        <div class="empty-state" style="padding: 0;">Завантаження...</div>
                     </div>
                 </div>
             </div>
@@ -556,6 +545,79 @@
             document.getElementById('admin-panel').style.display = 'block';
             document.getElementById('login-error').style.display = 'none';
             loadSoundboard();
+            loadAlbumSettings();
+        }
+
+        // --- ALBUM SETTINGS LOGIC ---
+        const albumKeys = [
+            { id: 'track_1', label: 'Трек 1', default: 'Готово' },
+            { id: 'track_2', label: 'Трек 2', default: 'Зведення' },
+            { id: 'track_3', label: 'Трек 3', default: 'Запис вокалу' },
+            { id: 'track_4', label: 'Трек 4', default: 'Аранжування' },
+            { id: 'track_5', label: 'Трек 5', default: 'Демо' },
+            { id: 'track_6', label: 'Трек 6', default: 'Демо' },
+            { id: 'track_7', label: 'Трек 7', default: 'Ідея' },
+            { id: 'divider' },
+            { id: 'cover', label: 'Обкладинка', default: 'В процесі' },
+            { id: 'video', label: 'Кліп', default: 'Планування' }
+        ];
+
+        async function loadAlbumSettings() {
+            try {
+                const res = await fetch(`${API_URL}/admin/settings?t=${new Date().getTime()}`);
+                const settings = await res.json();
+                renderAlbumSettings(settings);
+            } catch(e) {
+                console.error("Failed to load settings", e);
+            }
+        }
+
+        function renderAlbumSettings(settings) {
+            const container = document.getElementById('album-status-list');
+            container.innerHTML = '';
+            
+            albumKeys.forEach(item => {
+                if (item.id === 'divider') {
+                    container.innerHTML += `<div style="border-top: 2px solid rgba(0,0,0,0.05); margin: 0.5rem 0;"></div>`;
+                    return;
+                }
+                
+                const val = settings[item.id] || item.default;
+                
+                // Color logic
+                const vUpper = val.toUpperCase();
+                let bg = 'rgba(0,0,0,0.05)';
+                let color = '#888';
+                if (vUpper === 'ГОТОВО' || vUpper === 'ЗВЕДЕННЯ' || vUpper === 'ВИЙШОВ') {
+                    bg = 'rgba(217,0,0,0.1)';
+                    color = 'var(--accent)';
+                }
+                
+                container.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${item.label}</span>
+                        <span onclick="editStatus('${item.id}', '${val}')" style="cursor: pointer; color: ${color}; font-size: 0.85rem; text-transform: uppercase; background: ${bg}; padding: 2px 8px; border-radius: 10px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" title="Натисніть щоб змінити">
+                            ${val} ✎
+                        </span>
+                    </div>
+                `;
+            });
+        }
+
+        async function editStatus(key, currentVal) {
+            const newVal = prompt("Введіть новий статус (Готово, Зведення, Демо, В процесі, Ідея...):", currentVal);
+            if (newVal !== null && newVal.trim() !== "") {
+                try {
+                    await fetch(`${API_URL}/admin/settings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key, value: newVal.trim() })
+                    });
+                    loadAlbumSettings(); // Reload instantly
+                } catch(e) {
+                    alert("Помилка збереження");
+                }
+            }
         }
 
         function playSound(sound) {
