@@ -411,7 +411,7 @@
                         <p style="margin-top: 0.5rem; margin-bottom: 0;">Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
                     </div>
                     <button id="mute-btn" onclick="toggleMute()" class="mute-btn" title="Увімкнути/Вимкнути звук">
-                        <span id="mute-icon" style="font-size: 1.2rem; line-height: 1;">🔊</span>
+                        <img id="mute-icon" src="https://em-content.zobj.net/source/apple/391/speaker-high-volume_1f50a.png" width="24" height="24" alt="🔊" style="pointer-events: none;">
                     </button>
                 </div>
 
@@ -471,12 +471,12 @@
             const icon = document.getElementById('mute-icon');
             if (isMuted) {
                 masterVolume = 0.0;
-                icon.innerText = '🔇';
+                icon.src = 'https://em-content.zobj.net/source/apple/391/muted-speaker_1f507.png';
                 btn.classList.add('muted');
                 if (window.speechSynthesis) window.speechSynthesis.cancel(); // Stop current speech
             } else {
                 masterVolume = 1.0;
-                icon.innerText = '🔊';
+                icon.src = 'https://em-content.zobj.net/source/apple/391/speaker-high-volume_1f50a.png';
                 btn.classList.remove('muted');
             }
         }
