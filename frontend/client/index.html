@@ -185,9 +185,21 @@
     <div class="container">
         <h1>Надіслати звук</h1>
 
+        <div style="margin-bottom: 1.5rem;">
+            <div id="progress-text" style="font-weight: 900; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase;">ЗАПОВНЕНО 0 З 50 ЗВУКІВ</div>
+            <div style="width: 100%; height: 12px; background: #eee; border-radius: 10px; overflow: hidden; border: 1px solid #ccc;">
+                <div id="progress-fill" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.5s ease;"></div>
+            </div>
+        </div>
+
         <form id="donation-form" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
 
-            <div class="pill-element price-tag">Вартість: 500 ₴</div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="number" id="amount" class="pill-element" placeholder="СУМА ДОНАТУ (₴)" min="50" style="font-size: 1.2rem; font-weight: 900; text-align: center; color: var(--accent);" required autocomplete="off">
+                <div style="text-align: center; font-size: 0.8rem; font-weight: 700; opacity: 0.8;">
+                    МІНІМУМ 50 ₴. ЩОБ ВІДПРАВИТИ ЗВУК НА СТРІМ - ВІД 500 ₴.
+                </div>
+            </div>
 
             <!-- Звичайні поля -->
             <div id="data-fields" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
@@ -246,16 +258,13 @@
                 // Status limit check
                 const resStatus = await fetch(`${API_URL}/status`);
                 const dataStatus = await resStatus.json();
-                if (dataStatus.count >= 100) {
-                    const btn = document.getElementById('submit-btn');
-                    btn.innerText = 'ЛІМІТ ВИЧЕРПАНО (100/100)';
-                    btn.disabled = true;
-                    btn.style.background = '#888';
-                    btn.style.color = '#fff';
-                    btn.style.cursor = 'not-allowed';
-                    document.getElementById('audio').disabled = true;
-                    document.getElementById('name').disabled = true;
-                    document.getElementById('message').disabled = true;
+                const count = dataStatus.count;
+                
+                document.getElementById('progress-text').innerText = `ЗАПОВНЕНО ${count} З 50 ЗВУКІВ`;
+                document.getElementById('progress-fill').style.width = `${(count / 50) * 100}%`;
+                
+                if (count >= 50) {
+                    showError('ЛІМІТ ЗВУКІВ (50/50) ВИЧЕРПАНО!');
                 }
             } catch (err) {
                 console.error('Failed to load init data', err);
@@ -273,13 +282,53 @@
         const paymentContainer = document.getElementById('payment-container');
         const nameInput = document.getElementById('name');
         const messageInput = document.getElementById('message');
+        const amountInput = document.getElementById('amount');
         const recordBtn = document.getElementById('record-btn');
         const previewAudio = document.getElementById('preview-audio');
         const previewContainer = document.getElementById('preview-container');
         const clearAudioBtn = document.getElementById('clear-audio-btn');
+        const fileUploadWrapper = document.querySelector('.file-upload-wrapper');
 
         let stripeMode = false;
         let recordedFile = null;
+
+        // Dynamic Amount Logic
+        function updateAudioState() {
+            const amount = parseInt(amountInput.value, 10) || 0;
+            
+            if (amount < 500) {
+                fileInput.disabled = true;
+                fileLabel.style.opacity = '0.5';
+                fileLabel.style.cursor = 'not-allowed';
+                
+                recordBtn.disabled = true;
+                recordBtn.style.opacity = '0.5';
+                recordBtn.style.cursor = 'not-allowed';
+            } else {
+                fileInput.disabled = false;
+                fileLabel.style.opacity = '1';
+                fileLabel.style.cursor = 'pointer';
+                
+                recordBtn.disabled = false;
+                recordBtn.style.opacity = '1';
+                recordBtn.style.cursor = 'pointer';
+            }
+            
+            if (!stripeMode) {
+                submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} ₴` : 'ПРОДОВЖИТИ';
+            }
+        }
+
+        amountInput.addEventListener('input', updateAudioState);
+        updateAudioState(); // init
+
+        fileUploadWrapper.addEventListener('click', (e) => {
+            const amount = parseInt(amountInput.value, 10) || 0;
+            if (amount < 500) {
+                e.preventDefault();
+                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 ₴!');
+            }
+        });
 
         // Очищення аудіо
         clearAudioBtn.addEventListener('click', () => {
@@ -325,7 +374,15 @@
         let analyser;
         let drawVisual;
 
-        recordBtn.addEventListener('click', async () => {
+        recordBtn.addEventListener('click', async (e) => {
+            const amount = parseInt(amountInput.value, 10) || 0;
+            if (amount < 500) {
+                e.preventDefault();
+                e.stopPropagation();
+                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 ₴!');
+                return;
+            }
+
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
                 return;
@@ -492,10 +549,19 @@
             const file = recordedFile || fileInput.files[0];
             const name = nameInput.value;
             const message = messageInput.value;
+            const amount = parseInt(amountInput.value, 10);
 
-            if (!file) return showError('ОБЕРІТЬ ФАЙЛ АБО ЗАПИШІТЬ ЗВУК!');
+            if (isNaN(amount) || amount < 50) return showError('МІНІМАЛЬНА СУМА 50 ₴');
+            if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 ₴ НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
-            if (file.size > 10 * 1024 * 1024) return showError('ФАЙЛ ЗАНАДТО ВЕЛИКИЙ (МАКС 10MB)');
+            if (file && file.size > 10 * 1024 * 1024) return showError('ФАЙЛ ЗАНАДТО ВЕЛИКИЙ (МАКС 10MB)');
+            
+            // Limit check on frontend
+            const resStatus = await fetch(`${API_URL}/status`);
+            const dataStatus = await resStatus.json();
+            if (amount >= 500 && dataStatus.count >= 50) {
+                return showError('ЛІМІТ ЗВУКІВ (50/50) ВИЧЕРПАНО! ДОСТУПНІ ЛИШЕ ЗВИЧАЙНІ ДОНАТИ.');
+            }
 
             submitBtn.disabled = true;
             submitBtn.innerText = 'ПІДГОТОВКА...';
@@ -513,9 +579,10 @@
 
                 // Відправляємо файл та дані на наш бекенд
                 const formData = new FormData();
-                formData.append('audio', file);
+                if (file) formData.append('audio', file);
                 formData.append('name', name);
                 formData.append('message', message);
+                formData.append('amount', amount);
 
                 const uploadRes = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
@@ -550,7 +617,8 @@
                 const paymentElement = elements.create('payment', { layout: 'accordion' });
                 paymentElement.mount('#payment-element');
 
-                submitBtn.innerText = 'СПЛАТИТИ 500 ₴';
+                const amountStr = amountInput.value || '';
+                submitBtn.innerText = amountStr ? `СПЛАТИТИ ${amountStr} ₴` : 'ПРОДОВЖИТИ';
                 submitBtn.disabled = false;
                 stripeMode = true;
 
@@ -562,6 +630,10 @@
             }
         });
     </script>
+    
+    <div style="text-align: center; margin-top: 2rem; font-weight: 700; opacity: 0.5;">
+        Прийняти участь на <a href="https://KOSTIUCHENKO.CO.UK" style="color: var(--text-main); text-decoration: none;">KOSTIUCHENKO.CO.UK</a>
+    </div>
 </body>
 
 </html>

@@ -86,7 +86,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         const resDonation = await pool.query(`SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at FROM donations WHERE id = $1`, [donationId]);
         if (resDonation.rowCount > 0) {
           // Notify clients that a new sound is ready to play
-          io.emit('new_approved_sound', resDonation.rows[0]);
+          io.emit('play_sound', resDonation.rows[0]);
         }
       } catch (err) {
         console.error('DB Update Error:', err);
@@ -107,9 +107,8 @@ app.get('/api/config', (req, res) => {
 // Status API to check limit
 app.get('/api/status', async (req, res) => {
   try {
-    const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED'`);
-    const count = parseInt(countRes.rows[0].count, 10);
-    res.json({ count, max: 100 });
+    const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED' AND amount >= 500`);
+    res.json({ count: parseInt(countRes.rows[0].count, 10) });
   } catch (error) {
     res.status(500).json({ error: 'Database error' });
   }
@@ -118,26 +117,33 @@ app.get('/api/status', async (req, res) => {
 // Upload API
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   try {
-    const { name, message } = req.body;
+    const { name, message, amount } = req.body;
     const file = req.file;
+    const donationAmount = parseInt(amount, 10);
 
-    if (!file) return res.status(400).json({ error: 'No audio file provided' });
     if (!name) return res.status(400).json({ error: 'Name is required' });
+    if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
 
-    // 100 sound limit check
-    const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED'`);
-    if (parseInt(countRes.rows[0].count, 10) >= 100) {
-      return res.status(400).json({ error: 'ЛІМІТ ВИЧЕРПАНО! (100/100)' });
+    if (donationAmount >= 500 && !file) {
+      return res.status(400).json({ error: 'Для донату від 500 грн необхідно прикріпити звук' });
     }
 
-    // Convert buffer directly to base64
-    const base64Audio = file.buffer.toString('base64');
-    const mimeType = file.mimetype;
+    // 50 sound limit check (only for sound donations)
+    if (donationAmount >= 500) {
+      const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED' AND amount >= 500`);
+      if (parseInt(countRes.rows[0].count, 10) >= 50) {
+        return res.status(400).json({ error: 'ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! (50/50)' });
+      }
+    }
+
+    // Convert buffer directly to base64 if file exists
+    const base64Audio = file ? file.buffer.toString('base64') : '';
+    const mimeType = file ? file.mimetype : '';
 
     const result = await pool.query(
       `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
-       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
-      [name, message || '', base64Audio, mimeType]
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [name, message || '', donationAmount, base64Audio, mimeType]
     );
 
     res.json({ id: result.rows[0].id });
@@ -153,12 +159,13 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const { donation_id } = req.body;
     if (!donation_id) return res.status(400).json({ error: 'Missing donation_id' });
 
-    // Check if donation exists
-    const result = await pool.query('SELECT id FROM donations WHERE id = $1', [donation_id]);
+    // Check if donation exists and get amount
+    const result = await pool.query('SELECT id, amount FROM donations WHERE id = $1', [donation_id]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found' });
+    const donation = result.rows[0];
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 500 * 100, // 500 UAH
+      amount: Math.round(donation.amount * 100), // dynamic UAH amount
       currency: 'uah',
       metadata: { donation_id: donation_id },
       automatic_payment_methods: { enabled: true },
