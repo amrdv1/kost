@@ -232,8 +232,8 @@ app.post('/api/admin/moderate', adminAuth, async (req, res) => {
   }
 });
 
-// Admin API: Get all approved (for history on soundboard load)
-app.get('/api/live/history', async (req, res) => {
+// Admin API: Get all approved (for history on admin panel)
+app.get('/api/admin/history', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, customer_name, message, amount, audio_base64, audio_type, created_at 
@@ -264,7 +264,6 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Routes
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'index.html')));
-app.get('/live', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'live', 'index.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'client', 'index.html')));
 
 // Start Server using `server` (not `app`) because of socket.io

@@ -31,6 +31,79 @@
             overflow-x: hidden;
         }
 
+        /* --- ALERTS CONTAINER (from live) --- */
+        #alert-container {
+            position: fixed;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .alert-box {
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid var(--accent);
+            border-radius: 20px;
+            padding: 20px 40px;
+            box-shadow: 0 0 40px rgba(217, 0, 0, 0.3);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            min-width: 400px;
+            max-width: 80vw;
+            color: white;
+        }
+
+        .alert-box.sound-alert {
+            border-color: #ff0000;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.6);
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-30px); }
+        }
+
+        .alert-box.hiding {
+            animation: fadeOut 0.5s ease forwards;
+        }
+
+        .alert-amount {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(217,0,0,0.5);
+            margin-bottom: -10px;
+        }
+        
+        .alert-box.sound-alert .alert-amount {
+            color: #ff0000;
+            text-shadow: 0 0 20px rgba(255,0,0,0.8);
+        }
+
+        .alert-name {
+            font-size: 2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .alert-message {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-top: 10px;
+            font-style: italic;
+            color: #ddd;
+        }
+
         /* ЕКРАН ЛОГІНУ */
         #login-screen {
             display: flex;
@@ -288,11 +361,17 @@
             пароль!</p>
     </div>
 
-    <!-- АДМІН ПАНЕЛЬ (САУНДБОРД) -->
+    <!-- АДМІН ПАНЕЛЬ (САУНДБОРД / ІСТОРІЯ) -->
     <div id="admin-panel">
+        
+        <div style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.05); padding: 10px 20px; border-radius: 10px; z-index: 100;">
+            <label style="font-weight: 900; font-size: 0.8rem;">ГУЧНІСТЬ АЛЕРТІВ:</label><br>
+            <input type="range" id="master-volume" min="0" max="100" value="100" style="width: 150px;">
+        </div>
+
         <div class="header">
-            <h1>ВАШІ ДОНАТИ</h1>
-            <p>Усі донати з'являтимуться тут і відтворюватимуться автоматично</p>
+            <h1>ІСТОРІЯ ДОНАТІВ</h1>
+            <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
         </div>
 
         <div class="feed" id="sound-grid">
@@ -300,16 +379,126 @@
         </div>
     </div>
 
+    <!-- Active Alerts Pop Here -->
+    <div id="alert-container"></div>
+
     <script>
         const API_URL = '/api';
 
         // Listen for realtime updates
         const socket = io();
 
-        // When a new payment is made, it auto-approves and emits this:
-        socket.on('new_approved_sound', (sound) => {
-            addSoundToGrid(sound, true); // true = isNew, just add button, no autoplay!
+        // Volume control
+        let masterVolume = localStorage.getItem('sound_volume') ? parseFloat(localStorage.getItem('sound_volume')) : 1.0;
+        const volInput = document.getElementById('master-volume');
+        volInput.value = masterVolume * 100;
+        volInput.addEventListener('input', (e) => {
+            masterVolume = e.target.value / 100;
+            localStorage.setItem('sound_volume', masterVolume);
         });
+
+        // --- WEB AUDIO API FOR NOTIFICATIONS ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSynthAlert(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'normal') {
+                // High pleasant "ding-ding"
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now); // A5
+                osc.frequency.setValueAtTime(1108.73, now + 0.15); // C#6
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(masterVolume * 0.5, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                
+                osc.start(now);
+                osc.stop(now + 1);
+            } else if (type === 'sound') {
+                // Epic deep impact
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(masterVolume * 0.8, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                
+                osc.start(now);
+                osc.stop(now + 1.5);
+            }
+        }
+
+        // --- ALERT QUEUE & RENDER ---
+        let alertQueue = [];
+        let isAlerting = false;
+
+        function processQueue() {
+            if (isAlerting || alertQueue.length === 0) return;
+            
+            isAlerting = true;
+            const data = alertQueue.shift();
+            const isSoundDonation = data.amount >= 500;
+            
+            // Add to the admin grid (history) instantly
+            addSoundToGrid(data, true);
+            
+            // Render Alert UI
+            const container = document.getElementById('alert-container');
+            const box = document.createElement('div');
+            box.className = `alert-box ${isSoundDonation ? 'sound-alert' : ''}`;
+            
+            box.innerHTML = `
+                <div class="alert-amount">${data.amount} ₴</div>
+                <div class="alert-name">${data.customer_name || data.name}</div>
+                ${data.message ? `<div class="alert-message">"${data.message}"</div>` : ''}
+            `;
+            container.appendChild(box);
+
+            // Play specific synth sound
+            playSynthAlert(isSoundDonation ? 'sound' : 'normal');
+
+            // If it's a sound donation, play the recorded audio after synth finishes (~1.5s)
+            if (isSoundDonation && data.audio_base64) {
+                setTimeout(() => {
+                    const audioSource = `data:${data.audio_type};base64,${data.audio_base64}`;
+                    const customAudio = new Audio(audioSource);
+                    customAudio.volume = masterVolume;
+                    customAudio.play().catch(e => console.error("Audio play failed:", e));
+                }, 1500);
+            }
+
+            // Keep on screen for 20 seconds, then fade out
+            setTimeout(() => {
+                box.classList.add('hiding');
+                setTimeout(() => {
+                    box.remove();
+                    isAlerting = false;
+                    processQueue();
+                }, 500); // match fadeOut animation duration
+            }, 20000);
+        }
+
+        // When a new payment is made, it auto-approves and emits this:
+        socket.on('play_sound', (sound) => {
+            console.log("New donation received!", sound);
+            alertQueue.push(sound);
+            processQueue();
+        });
+
+        // Initialize user interaction for AudioContext (browsers block audio until click)
+        document.body.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }, { once: true });
 
         function login() {
             const u = document.getElementById('username').value;
@@ -372,9 +561,9 @@
                     <span class="donation-time">${timeString}</span>
                 </div>
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}
-                <audio class="donation-audio" controls src="${audioSource}"></audio>
+                ${sound.audio_base64 ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : `<div style="font-weight:700; color:#888;">(Без звуку)</div>`}
                 <div class="donation-actions">
-                    <button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>
+                    ${sound.audio_base64 ? `<button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>` : ''}
                 </div>
             `;
 
@@ -389,7 +578,7 @@
         async function loadSoundboard() {
             try {
                 // Dodated cache-busting to ensure mobile doesn't cache an empty array
-                const res = await fetch(`${API_URL}/live/history?t=${new Date().getTime()}`);
+                const res = await fetch(`${API_URL}/admin/history?t=${new Date().getTime()}`);
                 const sounds = await res.json();
 
                 const grid = document.getElementById('sound-grid');
