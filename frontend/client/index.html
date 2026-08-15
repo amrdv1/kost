@@ -645,8 +645,8 @@
             }
         });
 
-        // Кнопка назад від Stripe
-        backToFormBtn.addEventListener('click', () => {
+        function cancelPaymentFlow() {
+            if (!stripeMode) return;
             stripeMode = false;
             paymentContainer.style.display = 'none';
             document.getElementById('top-section').style.display = 'block';
@@ -660,6 +660,22 @@
             if (elements) {
                 const pe = elements.getElement('payment');
                 if (pe) pe.destroy();
+            }
+        }
+
+        // Обробка системної кнопки "Назад" у браузері
+        window.addEventListener('popstate', (e) => {
+            if (stripeMode) {
+                cancelPaymentFlow();
+            }
+        });
+
+        // Кнопка назад від Stripe
+        backToFormBtn.addEventListener('click', () => {
+            if (window.location.hash === '#payment') {
+                history.back(); // Це викличе popstate
+            } else {
+                cancelPaymentFlow();
             }
         });
 
@@ -825,6 +841,9 @@
                 submitBtn.innerText = amountStr ? `СПЛАТИТИ ${amountStr} ₴` : 'ПРОДОВЖИТИ';
                 submitBtn.disabled = false;
                 stripeMode = true;
+
+                // Змінюємо URL, щоб кнопка "Назад" у браузері працювала
+                history.pushState({ page: 'payment' }, '', '#payment');
 
             } catch (err) {
                 console.error(err);
