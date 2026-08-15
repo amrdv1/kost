@@ -504,6 +504,16 @@
                     customAudio.volume = masterVolume;
                     customAudio.play().catch(e => console.error("Audio play failed:", e));
                 }, 1500);
+            } else {
+                // TEXT TO SPEECH for normal donations
+                setTimeout(() => {
+                    const msg = data.message ? data.message : 'Дякую за донат!';
+                    const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
+                    utterance.lang = 'uk-UA';
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }, 1000);
             }
 
             // Keep on screen for 20 seconds, then fade out

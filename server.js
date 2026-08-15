@@ -111,6 +111,14 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
+// Profanity filter utility
+const badWordsRegex = new RegExp('(ху[йяеё]|пизд|еба[тлн]|ёба|бля[дт]|шлюх|сук[аи]|пидор|гондон|гандон|мудак|залуп|дроч)', 'gi');
+
+function filterProfanity(text) {
+  if (!text) return text;
+  return text.replace(badWordsRegex, '***');
+}
+
 // Upload API
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   try {
@@ -137,10 +145,13 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     const base64Audio = file ? file.buffer.toString('base64') : '';
     const mimeType = file ? file.mimetype : '';
 
+    const filteredName = filterProfanity(name);
+    const filteredMessage = filterProfanity(message || '');
+
     const result = await pool.query(
       `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [name, message || '', donationAmount, base64Audio, mimeType]
+      [filteredName, filteredMessage, donationAmount, base64Audio, mimeType]
     );
 
     res.json({ id: result.rows[0].id });
