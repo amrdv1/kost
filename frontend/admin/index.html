@@ -10,11 +10,10 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-color: #0a0a0a;
-            --text-main: #ffffff;
-            --card-bg: #151515;
-            --accent: #ff003c;
-            --accent-glow: rgba(255, 0, 60, 0.4);
+            --bg-color: #ffffff;
+            --text-main: #000000;
+            --btn-bg: #f2f2f2;
+            --accent: #d90000;
         }
 
         * {
@@ -39,7 +38,7 @@
             justify-content: center; 
             height: 100vh; 
             padding: 2rem;
-            background: radial-gradient(circle at center, #1a050a 0%, var(--bg-color) 100%);
+            background: var(--bg-color);
         }
         
         #login-screen h1 {
@@ -49,7 +48,6 @@
             font-size: 2.5rem;
             margin-bottom: 2rem;
             text-align: center;
-            text-shadow: 0 0 20px var(--accent-glow);
         }
 
         #login-screen input { 
@@ -57,38 +55,41 @@
             margin: 0.5rem; 
             width: 100%; 
             max-width: 320px;
-            background: rgba(255,255,255,0.05);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.1); 
-            border-radius: 15px; 
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: none; 
+            border-radius: 50px; 
             font-size: 1rem; 
             font-family: 'Montserrat', sans-serif;
             font-weight: 700; 
             text-align: center;
             outline: none;
-            transition: border-color 0.3s;
+            transition: opacity 0.3s;
         }
 
         #login-screen input:focus {
-            border-color: var(--accent);
+            opacity: 0.8;
         }
         
         #login-screen button { 
             padding: 1.2rem; 
             width: 100%; 
             max-width: 320px;
-            background: var(--accent); 
-            color: white; 
+            background: var(--text-main); 
+            color: var(--bg-color); 
             border: none; 
-            border-radius: 15px; 
+            border-radius: 50px; 
             cursor: pointer; 
             font-family: 'Montserrat', sans-serif;
             font-weight: 900; 
             font-size: 1.2rem; 
             margin-top: 1rem; 
             text-transform: uppercase;
-            box-shadow: 0 10px 20px var(--accent-glow);
-            transition: transform 0.1s, box-shadow 0.2s;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        #login-screen button:hover {
+            opacity: 0.8;
         }
 
         #login-screen button:active {
@@ -107,7 +108,6 @@
             text-align: center;
             margin-bottom: 3rem;
             padding-bottom: 2rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .header h1 {
@@ -116,14 +116,13 @@
             text-transform: uppercase;
             font-size: 2.2rem;
             margin: 0 0 0.5rem 0;
-            text-shadow: 0 0 15px var(--accent-glow);
         }
 
         .header p {
-            color: #888;
+            color: var(--text-main);
             font-weight: 700;
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .grid {
@@ -133,8 +132,8 @@
         }
 
         .sound-btn {
-            background: var(--card-bg);
-            border: 2px solid rgba(255,255,255,0.05);
+            background: var(--text-main);
+            border: none;
             padding: 1.5rem 1rem;
             border-radius: 20px;
             cursor: pointer;
@@ -144,32 +143,15 @@
             align-items: center;
             text-align: center;
             min-height: 140px;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .sound-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, rgba(255,0,60,0.2) 0%, transparent 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
+            transition: transform 0.1s, opacity 0.2s;
         }
 
         .sound-btn:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255,0,60,0.5);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px var(--accent-glow);
-        }
-
-        .sound-btn:hover::before {
-            opacity: 1;
+            opacity: 0.8;
         }
 
         .sound-btn:active {
-            transform: translateY(2px) scale(0.95);
+            transform: scale(0.95);
         }
 
         .sound-btn .name {
@@ -177,10 +159,8 @@
             font-weight: 900;
             font-size: 1.1rem;
             text-transform: uppercase;
-            color: white;
+            color: var(--accent);
             margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
             word-break: break-word;
         }
 
@@ -188,9 +168,7 @@
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
             font-size: 0.8rem;
-            color: #aaa;
-            position: relative;
-            z-index: 1;
+            color: var(--bg-color);
             word-break: break-word;
         }
 
@@ -198,21 +176,22 @@
             grid-column: 1 / -1;
             text-align: center;
             padding: 4rem 1rem;
-            color: #555;
+            color: var(--text-main);
+            font-weight: 700;
         }
         
         .empty-state svg {
             width: 64px;
             height: 64px;
-            fill: #333;
+            fill: var(--text-main);
             margin-bottom: 1rem;
         }
 
         /* Анімація нового звуку */
         @keyframes pulseNew {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-glow); }
-            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px var(--accent-glow); border-color: var(--accent); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-glow); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 0, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(217, 0, 0, 0.4); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 0, 0, 0.4); }
         }
 
         .new-sound {
