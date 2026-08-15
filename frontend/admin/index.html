@@ -409,7 +409,10 @@
             <div style="flex: 1; min-width: 0;">
                 <div class="header" style="text-align: left; margin-bottom: 2rem; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                     <div>
-                        <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
+                            <button onclick="logout()" style="padding: 10px 20px; font-size: 0.9rem; margin-left: 20px; background: rgba(0,0,0,0.05); color: var(--text-main); border-radius: 15px;">ВИЙТИ</button>
+                        </div>
                         <p style="margin-top: 0.5rem; margin-bottom: 0;">Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
                     </div>
                 </div>
@@ -639,15 +642,53 @@
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         });
 
-        function login() {
+        async function login() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if (u.trim().toLowerCase() === 'костюченко' && p.trim() !== '') {
-                localStorage.setItem('admin_token', p.trim());
-                showBoard();
-            } else {
+            
+            if (u.trim().toLowerCase() !== 'костюченко' || p.trim() === '') {
+                document.getElementById('login-error').innerText = 'Невірний логін або пароль!';
+                document.getElementById('login-error').style.display = 'block';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: p.trim() })
+                });
+                
+                const data = await res.json();
+                if (res.ok && data.token) {
+                    sessionStorage.setItem('admin_token', data.token);
+                    document.getElementById('password').value = '';
+                    showBoard();
+                } else {
+                    document.getElementById('login-error').innerText = data.error || 'Невірний пароль!';
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('login-error').innerText = 'Помилка підключення до сервера';
                 document.getElementById('login-error').style.display = 'block';
             }
+        }
+        
+        async function logout() {
+            const token = sessionStorage.getItem('admin_token');
+            if (token) {
+                try {
+                    await fetch(`${API_URL}/admin/logout`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch(e) {}
+            }
+            sessionStorage.removeItem('admin_token');
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('password').value = '';
         }
 
         function showBoard() {
@@ -727,9 +768,13 @@
 
         async function updateStatusDirectly(key, newVal) {
             try {
+                const token = sessionStorage.getItem('admin_token');
                 await fetch(`${API_URL}/admin/settings`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ key, value: newVal })
                 });
                 loadAlbumSettings(); // Reload instantly to update colors
@@ -831,7 +876,7 @@
         }
 
         // Check if already logged in on load
-        if (localStorage.getItem('admin_token')) {
+        if (sessionStorage.getItem('admin_token')) {
             showBoard();
         }
 

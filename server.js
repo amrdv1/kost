@@ -7,11 +7,16 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Pool } = require('pg');
 const http = require('http');
 const { Server } = require('socket.io');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 const port = process.env.PORT || 3000;
+
+// Security variables
+const activeSessions = new Set();
+const failedAttempts = new Map();
 
 // Initialize PostgreSQL Pool
 const pool = new Pool({
@@ -196,11 +201,51 @@ app.post('/api/create-payment-intent', async (req, res) => {
 // Admin Auth Middleware
 const adminAuth = (req, res, next) => {
   const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
+  if (!auth || !auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const token = auth.split(' ')[1];
+  if (!activeSessions.has(token)) {
+    return res.status(401).json({ error: 'Unauthorized or session expired' });
   }
   next();
 };
+
+// Admin Login Endpoint
+app.post('/api/admin/login', express.json(), (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const { password } = req.body;
+
+  // Brute-force protection: Block IP for 5 minutes after 5 failed attempts
+  const attemptsInfo = failedAttempts.get(ip) || { count: 0, lockUntil: 0 };
+  if (attemptsInfo.lockUntil > Date.now()) {
+    return res.status(429).json({ error: 'Забагато спроб входу. Зачекайте 5 хвилин.' });
+  }
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    // Reset attempts on success
+    failedAttempts.delete(ip);
+    
+    // Generate secure random token
+    const token = crypto.randomBytes(32).toString('hex');
+    activeSessions.add(token);
+    return res.json({ token });
+  } else {
+    attemptsInfo.count += 1;
+    if (attemptsInfo.count >= 5) {
+      attemptsInfo.lockUntil = Date.now() + 5 * 60 * 1000; // Lock for 5 mins
+    }
+    failedAttempts.set(ip, attemptsInfo);
+    return res.status(401).json({ error: 'Невірний пароль' });
+  }
+});
+
+// Admin Logout Endpoint
+app.post('/api/admin/logout', adminAuth, (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  activeSessions.delete(token);
+  res.json({ success: true });
+});
 
 // Admin API: Get pending donations
 app.get('/api/admin/pending', adminAuth, async (req, res) => {
@@ -273,7 +318,7 @@ app.get('/api/admin/settings', async (req, res) => {
 });
 
 // Admin API: Update album settings
-app.post('/api/admin/settings', async (req, res) => {
+app.post('/api/admin/settings', adminAuth, async (req, res) => {
   try {
     const { key, value } = req.body;
     await pool.query(
