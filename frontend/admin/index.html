@@ -562,8 +562,36 @@
                 if (!isMuted) {
                     setTimeout(() => {
                         const msg = data.message ? data.message : 'Дякую за донат!';
+                        
+                        // Simple language detection
+                        let lang = 'uk-UA';
+                        if (/[a-z]/i.test(msg) && !/[а-я]/i.test(msg)) {
+                            lang = 'en-US';
+                        } else if (/[ыэъё]/i.test(msg)) {
+                            lang = 'ru-RU';
+                        } else if (/[іїєґ]/i.test(msg)) {
+                            lang = 'uk-UA';
+                        }
+                        
+                        // Name is always spoken in Ukrainian (or the detected lang if preferred)
                         const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
-                        utterance.lang = 'uk-UA';
+                        utterance.lang = lang;
+                        
+                        // Try to explicitly find the best voice model
+                        const voices = window.speechSynthesis.getVoices();
+                        // 1. Try exact match (e.g. 'uk-UA')
+                        let voice = voices.find(v => v.lang === lang);
+                        // 2. Try partial match (e.g. 'uk')
+                        if (!voice) voice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+                        // 3. Fallbacks if Ukrainian is missing but requested (try Google's specific voices)
+                        if (!voice && lang === 'uk-UA') {
+                            voice = voices.find(v => v.name.toLowerCase().includes('ukrainian') || v.name.toLowerCase().includes('українська'));
+                        }
+                        
+                        if (voice) {
+                            utterance.voice = voice;
+                        }
+
                         utterance.rate = 1.0;
                         utterance.pitch = 1.0;
                         window.speechSynthesis.speak(utterance);
