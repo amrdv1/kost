@@ -138,6 +138,59 @@
             margin-top: 1rem;
             border-radius: 50px;
         }
+
+        /* САУНДБОРД */
+        .soundboard-section {
+            margin-top: 4rem;
+            border-top: 4px solid var(--text-main);
+            padding-top: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 2rem;
+        }
+
+        .sound-btn {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border: none;
+            padding: 1.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 120px;
+        }
+
+        .sound-btn:active {
+            transform: scale(0.95);
+        }
+
+        .sound-btn:hover {
+            opacity: 0.8;
+        }
+
+        .sound-btn .name {
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .sound-btn .message {
+            font-weight: 700;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -160,6 +213,14 @@
         <p>Ці звуки оплачені і чекають вашого підтвердження.</p>
         <div id="donations">
             <p style="text-align: center; font-weight: 700;">Завантаження...</p>
+        </div>
+
+        <div class="soundboard-section">
+            <h1>ВАШ САУНДБОРД</h1>
+            <p>Усі схвалені звуки з'являються тут. Натискайте, щоб відтворити!</p>
+            <div class="grid" id="sound-grid">
+                <!-- Звуки будуть тут -->
+            </div>
         </div>
     </div>
 
@@ -261,6 +322,7 @@
 
                 if(res.ok) {
                     loadPending();
+                    loadSoundboard();
                 } else {
                     alert('Помилка сервера');
                 }
@@ -269,9 +331,43 @@
             }
         }
 
+        // САУНДБОРД
+        async function loadSoundboard() {
+            try {
+                const res = await fetch(`${API_URL}/live/history`); // публічний ендпоінт, не потребує токена
+                const sounds = await res.json();
+                const grid = document.getElementById('sound-grid');
+                grid.innerHTML = '';
+
+                if (sounds.length === 0) {
+                    grid.innerHTML = '<p style="text-align: center; grid-column: 1 / -1; color: #888; font-weight: 700;">Саундборд порожній. Схваліть перший звук!</p>';
+                    return;
+                }
+
+                sounds.forEach(sound => {
+                    const btn = document.createElement('button');
+                    btn.className = 'sound-btn';
+                    btn.innerHTML = `
+                        <div class="name">${sound.customer_name}</div>
+                        <div class="message">${sound.message || ''}</div>
+                    `;
+                    
+                    const audioSource = `data:${sound.audio_type};base64,${sound.audio_base64}`;
+                    btn.onclick = () => {
+                        const audio = new Audio(audioSource);
+                        audio.play();
+                    };
+                    grid.appendChild(btn);
+                });
+            } catch (err) {
+                console.error("Failed to load soundboard", err);
+            }
+        }
+
         // Check if already logged in on load
         if (localStorage.getItem('admin_token')) {
             loadPending();
+            loadSoundboard();
         }
     </script>
 </body>
