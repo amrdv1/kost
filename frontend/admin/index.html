@@ -481,17 +481,9 @@
             // Add to the admin grid (history) instantly
             addSoundToGrid(data, true);
             
-            // Render Alert UI
-            const container = document.getElementById('alert-container');
-            const box = document.createElement('div');
-            box.className = `alert-box ${isSoundDonation ? 'sound-alert' : ''}`;
-            
-            box.innerHTML = `
-                <div class="alert-amount">${data.amount} ₴</div>
-                <div class="alert-name">${data.customer_name || data.name}</div>
-                ${data.message ? `<div class="alert-message">"${data.message}"</div>` : ''}
-            `;
-            container.appendChild(box);
+            // Render Alert UI - REMOVED PER USER REQUEST
+            // The visual popup is now gone, but the sound/history still works
+            // We just don't create or append the box anymore
 
             // Play specific synth sound
             playSynthAlert(isSoundDonation ? 'sound' : 'normal');
@@ -516,16 +508,17 @@
                 }, 1000);
             }
 
-            // Keep on screen for 20 seconds, then fade out
+            // Keep alerting state active for 20 seconds, then process next in queue
             setTimeout(() => {
-                box.classList.add('hiding');
-                setTimeout(() => {
-                    box.remove();
-                    isAlerting = false;
-                    processQueue();
-                }, 500); // match fadeOut animation duration
+                isAlerting = false;
+                processQueue();
             }, 20000);
         }
+
+        // Preload voices
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
 
         // When a new payment is made, it auto-approves and emits this:
         socket.on('play_sound', (sound) => {

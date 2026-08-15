@@ -267,25 +267,26 @@
 <body>
 
     <div class="container">
-        <h1>Надіслати звук</h1>
-
-        <div class="progress-wrapper">
-            <div id="progress-text">ЗАПОВНЕНО 0 З 50 ЗВУКІВ</div>
-            <div class="progress-track">
-                <div id="progress-fill"></div>
-            </div>
-        </div>
-
         <form id="donation-form" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+            <div id="top-section">
+                <h1>Надіслати звук</h1>
 
-            <div class="amount-wrapper">
-                <input type="number" id="amount" placeholder="500" min="50" required autocomplete="off">
-                <div class="currency-symbol">₴</div>
-            </div>
-            
-            <div class="info-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                <span>Мінімум 50 ₴. Щоб відправити звук на стрім — від 500 ₴.</span>
+                <div class="progress-wrapper">
+                    <div id="progress-text">ЗАПОВНЕНО 0 З 50 ЗВУКІВ</div>
+                    <div class="progress-track">
+                        <div id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="amount-wrapper">
+                    <input type="number" id="amount" placeholder="500" min="50" required autocomplete="off">
+                    <div class="currency-symbol">₴</div>
+                </div>
+                
+                <div class="info-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    <span>Мінімум 50 ₴. Щоб відправити звук на стрім — від 500 ₴.</span>
+                </div>
             </div>
 
             <!-- Звичайні поля -->
@@ -697,7 +698,8 @@
                 if (!stripeRes.ok) throw new Error('Помилка генерації платежу');
                 const { clientSecret } = await stripeRes.json();
 
-                // Ховаємо інпути, показуємо Stripe
+                // Ховаємо все зайве, залишаємо Stripe
+                document.getElementById('top-section').style.display = 'none';
                 dataFields.style.display = 'none';
                 paymentContainer.style.display = 'block';
 
