@@ -137,7 +137,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found' });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 500 * 100, // 500 UAH
+      amount: 5 * 100, // 5 UAH
       currency: 'uah',
       metadata: { donation_id: donation_id },
       automatic_payment_methods: { enabled: true },
