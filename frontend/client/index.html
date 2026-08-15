@@ -234,6 +234,14 @@
             font-family: inherit;
             outline: none;
             transition: all 0.3s;
+            -moz-appearance: textfield; /* Hide spinner in Firefox */
+        }
+        
+        /* Hide spinners in WebKit/Blink (Chrome, Safari, Edge) */
+        .amount-wrapper input::-webkit-outer-spin-button,
+        .amount-wrapper input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .amount-wrapper input:focus {
