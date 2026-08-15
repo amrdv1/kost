@@ -4,22 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sound Moderation - KOSTIUCHENKO</title>
-    <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Montserrat', sans-serif; padding: 0; margin: 0; background: #f4f4f4; }
-        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fff; }
-        #login-screen input { padding: 1rem; margin: 0.5rem; width: 300px; border: 2px solid #ccc; border-radius: 10px; font-size: 1rem; font-weight: bold; }
-        #login-screen button { padding: 1rem; width: 320px; background: #d90000; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 1rem; }
-        #admin-panel { display: none; padding: 2rem; }
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #000000;
+            --btn-bg: #f2f2f2;
+            --accent: #d90000;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            padding: 0; 
+            margin: 0; 
+            background: var(--bg-color); 
+            color: var(--text-main);
+        }
         
-        .card { background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .btn { padding: 0.8rem 1.5rem; cursor: pointer; border: none; border-radius: 8px; color: white; margin-right: 0.5rem; font-weight: bold; font-size: 1rem; }
-        .btn-approve { background: #000; }
-        .btn-reject { background: #d90000; }
+        #login-screen { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            background: var(--bg-color); 
+        }
+        
+        #login-screen h1 {
+            color: var(--accent);
+            text-transform: uppercase;
+            font-weight: 900;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        #login-screen input { 
+            padding: 1.2rem; 
+            margin: 0.5rem; 
+            width: 320px; 
+            background: var(--btn-bg);
+            border: none; 
+            border-radius: 50px; 
+            font-size: 1rem; 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700; 
+            text-align: center;
+            outline: none;
+        }
+        
+        #login-screen button { 
+            padding: 1.2rem; 
+            width: 360px; 
+            background: var(--text-main); 
+            color: var(--bg-color); 
+            border: none; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900; 
+            font-size: 1.2rem; 
+            margin-top: 1rem; 
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+
+        #login-screen button:hover {
+            opacity: 0.8;
+        }
+
+        #admin-panel { 
+            display: none; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 1rem; 
+        }
+
+        #admin-panel h1 {
+            color: var(--accent);
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #admin-panel > p {
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+        
+        .card { 
+            background: var(--btn-bg); 
+            padding: 1.5rem; 
+            margin-bottom: 1.5rem; 
+            border-radius: 20px; 
+        }
+
+        .card p {
+            font-weight: 700;
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn { 
+            flex: 1;
+            padding: 1rem; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 50px; 
+            color: var(--bg-color); 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900; 
+            font-size: 1.1rem; 
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.8; }
+        .btn-approve { background: var(--text-main); }
+        .btn-reject { background: var(--accent); }
+
+        /* Кастомізація аудіо плеєра */
+        audio {
+            width: 100%;
+            margin-top: 1rem;
+            border-radius: 50px;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
 
     <!-- ЕКРАН ЛОГІНУ -->
     <div id="login-screen">
@@ -32,9 +156,11 @@
 
     <!-- АДМІН ПАНЕЛЬ -->
     <div id="admin-panel">
-        <h1>Модерація звуків</h1>
-        <p>Звуки, що очікують підтвердження після оплати.</p>
-        <div id="donations">Завантаження...</div>
+        <h1>МОДЕРАЦІЯ ЗВУКІВ</h1>
+        <p>Ці звуки оплачені і чекають вашого підтвердження.</p>
+        <div id="donations">
+            <p style="text-align: center; font-weight: 700;">Завантаження...</p>
+        </div>
     </div>
 
     <script>
@@ -90,7 +216,7 @@
                 container.innerHTML = '';
                 
                 if(donations.length === 0) {
-                    container.innerHTML = '<i>No pending donations.</i>';
+                    container.innerHTML = '<p style="text-align: center; font-weight: 700; color: #888;">Немає нових звуків для модерації.</p>';
                     return;
                 }
 
@@ -98,15 +224,15 @@
                     const div = document.createElement('div');
                     div.className = 'card';
                     div.innerHTML = `
-                        <p><strong>Від кого:</strong> ${donation.customer_name}</p>
-                        <p><strong>Сума:</strong> ${donation.amount} ₴</p>
-                        <p><strong>Повідомлення:</strong> ${donation.message || '—'}</p>
-                        <audio controls style="width: 100%; margin-top: 10px;">
+                        <p style="color: var(--accent); font-size: 1.2rem;">${donation.amount} ₴</p>
+                        <p><strong>ВІД КОГО:</strong> ${donation.customer_name}</p>
+                        <p><strong>ПОВІДОМЛЕННЯ:</strong> ${donation.message || '—'}</p>
+                        <audio controls>
                             <source src="data:${donation.audio_type};base64,${donation.audio_base64}" type="${donation.audio_type}">
                         </audio>
                         <div class="actions">
-                            <button class="btn btn-approve" onclick="moderate('${donation.id}', 'APPROVED')">Схвалити</button>
-                            <button class="btn btn-reject" onclick="moderate('${donation.id}', 'REJECTED')">Відхилити</button>
+                            <button class="btn btn-approve" onclick="moderate('${donation.id}', 'APPROVED')">СХВАЛИТИ</button>
+                            <button class="btn btn-reject" onclick="moderate('${donation.id}', 'REJECTED')">ВІДХИЛИТИ</button>
                         </div>
                     `;
                     container.appendChild(div);
