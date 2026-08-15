@@ -351,24 +351,24 @@
                 <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; align-items: stretch;">
                     <div class="file-upload-wrapper" style="width: calc(50% - 5px); flex: none; display: flex;">
                         <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*">
-                        <label for="audio" class="pill-element file-upload-label" id="file-label-text" style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex: 1; width: 100%; box-sizing: border-box;">
+                        <label for="audio" class="pill-element file-upload-label" id="file-label-text" style="display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; width: 100%; box-sizing: border-box;">
                             <svg viewBox="0 0 24 24">
                                 <path
                                     d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                             </svg>
-                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; flex: 1;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
                                 <span style="white-space: nowrap;">ОБРАТИ АУДІО</span>
                                 <span style="font-size: 0.9em; opacity: 0.8; white-space: nowrap;">(ДО 20С)</span>
                             </div>
                         </label>
                     </div>
                     <button type="button" id="record-btn" class="pill-element"
-                        style="width: calc(50% - 5px); flex: none; background: #7d7d7d; color: white; display: flex; align-items: center; justify-content: flex-start; gap: 8px; transition: box-shadow 0.1s, background-color 0.2s; height: 100%; box-sizing: border-box;">
+                        style="width: calc(50% - 5px); flex: none; background: #7d7d7d; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: box-shadow 0.1s, background-color 0.2s; height: 100%; box-sizing: border-box;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                             <path
                                 d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
                         </svg>
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; flex: 1;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
                             <span>ЗАПИС</span>
                             <span style="font-size: 0.9em; opacity: 0.9;">(ДО 20С)</span>
                         </div>
@@ -626,10 +626,10 @@
                     previewAudio.src = audioUrl;
                     previewContainer.style.display = 'flex';
 
-                    recordBtn.style.justifyContent = 'flex-start';
+                    recordBtn.style.justifyContent = 'center';
                     recordBtn.innerHTML = `
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; flex: 1;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
                             <span>ЗАПИС</span>
                             <span style="font-size: 0.9em; opacity: 0.9;">(ДО 20С)</span>
                         </div>
