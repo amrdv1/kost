@@ -380,6 +380,9 @@
 
             <!-- Stripe Контейнер -->
             <div id="payment-container">
+                <button type="button" id="back-to-form-btn" class="pill-element" style="margin-bottom: 1rem; background: var(--btn-bg); color: var(--text-main); font-size: 0.8rem; padding: 0.8rem;">
+                    ⬅ ПОВЕРНУТИСЯ ДО ФОРМИ
+                </button>
                 <div id="payment-element"></div>
             </div>
 
@@ -456,6 +459,7 @@
         const previewContainer = document.getElementById('preview-container');
         const clearAudioBtn = document.getElementById('clear-audio-btn');
         const fileUploadWrapper = document.querySelector('.file-upload-wrapper');
+        const backToFormBtn = document.getElementById('back-to-form-btn');
 
         let stripeMode = false;
         let recordedFile = null;
@@ -641,7 +645,24 @@
             }
         });
 
-        // Drag and Drop
+        // Кнопка назад від Stripe
+        backToFormBtn.addEventListener('click', () => {
+            stripeMode = false;
+            paymentContainer.style.display = 'none';
+            document.getElementById('top-section').style.display = 'block';
+            dataFields.style.display = 'flex';
+            
+            // Відновлюємо кнопку "Продовжити"
+            const amount = parseInt(amountInput.value, 10) || 0;
+            submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} ₴` : 'ПРОДОВЖИТИ';
+            
+            // Знищуємо елемент Stripe щоб можна було створити новий, якщо користувач змінить суму і натисне знову
+            if (elements) {
+                const pe = elements.getElement('payment');
+                if (pe) pe.destroy();
+            }
+        });
+
         const dropZone = document.querySelector('.file-upload-wrapper');
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
