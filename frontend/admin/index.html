@@ -300,6 +300,43 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
+        .mute-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 2px solid #eaeaea;
+            font-weight: 900;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            white-space: nowrap;
+            outline: none;
+        }
+        
+        .mute-btn:hover {
+            border-color: var(--text-main);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .mute-btn.muted {
+            background: var(--btn-bg);
+            color: var(--accent);
+            border-color: rgba(217, 0, 0, 0.2);
+        }
+        
+        .mute-btn.muted:hover {
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(217, 0, 0, 0.15);
+        }
+
         .empty-state {
             grid-column: 1 / -1;
             text-align: center;
@@ -377,7 +414,7 @@
                         <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
                         <p style="margin-top: 0.5rem; margin-bottom: 0;">Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
                     </div>
-                    <button id="mute-btn" onclick="toggleMute()" style="display: flex; align-items: center; gap: 8px; background: var(--text-main); color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; transition: transform 0.2s, background 0.3s, box-shadow 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); flex-shrink: 0; white-space: nowrap;">
+                    <button id="mute-btn" onclick="toggleMute()" class="mute-btn">
                         <span id="mute-icon" style="font-size: 1.2rem;">🔊</span>
                         <span id="mute-text">ЗВУК УВІМКНЕНО</span>
                     </button>
@@ -442,13 +479,13 @@
                 masterVolume = 0.0;
                 icon.innerText = '🔇';
                 text.innerText = 'ЗВУК ВИМКНЕНО';
-                btn.style.background = 'var(--accent)';
+                btn.classList.add('muted');
                 if (window.speechSynthesis) window.speechSynthesis.cancel(); // Stop current speech
             } else {
                 masterVolume = 1.0;
                 icon.innerText = '🔊';
                 text.innerText = 'ЗВУК УВІМКНЕНО';
-                btn.style.background = 'var(--text-main)';
+                btn.classList.remove('muted');
             }
         }
 
