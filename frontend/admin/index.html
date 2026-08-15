@@ -339,7 +339,7 @@
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}
                 <audio class="donation-audio" controls src="${audioSource}"></audio>
                 <div class="donation-actions">
-                    <a href="${audioSource}" download="sound_${sound.customer_name}.webm" class="btn-action">Завантажити звук</a>
+                    <button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>
                 </div>
             `;
             
@@ -382,6 +382,95 @@
         // Check if already logged in on load
         if (localStorage.getItem('admin_token')) {
             showBoard();
+        }
+
+        // WAV Conversion Utility
+        async function downloadAsWav(base64Audio, filename) {
+            try {
+                // Зміна тексту кнопки на "Зачекайте..."
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "ОБРОБКА...";
+                btn.disabled = true;
+
+                // 1. Декодування base64
+                const binaryString = window.atob(base64Audio);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const arrayBuffer = bytes.buffer;
+
+                // 2. Декодування аудіо-даних через AudioContext (отримуємо чистий PCM)
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                // 3. Запаковуємо PCM у формат .wav
+                const wavBlob = bufferToWave(audioBuffer, audioBuffer.length);
+
+                // 4. Завантаження
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                // Відновлення кнопки
+                btn.innerText = originalText;
+                btn.disabled = false;
+            } catch (err) {
+                console.error("Помилка конвертації в WAV", err);
+                alert("Помилка конвертації аудіо в формат WAV.");
+                event.target.innerText = "ПОМИЛКА";
+            }
+        }
+
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+                length = len * numOfChan * 2 + 44,
+                buffer = new ArrayBuffer(length),
+                view = new DataView(buffer),
+                channels = [], i, sample,
+                offset = 0,
+                pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            // write WAVE header
+            setUint32(0x46464952);                         // "RIFF"
+            setUint32(length - 8);                         // file length - 8
+            setUint32(0x45564157);                         // "WAVE"
+
+            setUint32(0x20746d66);                         // "fmt " chunk
+            setUint32(16);                                 // length = 16
+            setUint16(1);                                  // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(abuffer.sampleRate);
+            setUint32(abuffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
+            setUint16(numOfChan * 2);                      // block-align
+            setUint16(16);                                 // 16-bit
+
+            setUint32(0x61746164);                         // "data" - chunk
+            setUint32(length - pos - 4);                   // chunk length
+
+            // write interleaved data
+            for(i = 0; i < abuffer.numberOfChannels; i++)
+                channels.push(abuffer.getChannelData(i));
+
+            while(pos < length) {
+                for(i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0; // scale to 16-bit signed int
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([buffer], {type: "audio/wav"});
         }
     </script>
 </body>
