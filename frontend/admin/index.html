@@ -377,30 +377,6 @@
 
         .new-sound {
             animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, pulseNew 2s infinite !important;
-            border: 2px solid var(--accent);
-        }
-
-        .logout-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            font-size: 0.9rem;
-            font-weight: 900;
-            font-family: 'Montserrat', sans-serif;
-            background: transparent;
-            color: rgba(0, 0, 0, 0.15);
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-        
-        .logout-btn:hover {
-            color: rgba(0, 0, 0, 0.4);
         }
 
         @media (max-width: 900px) {
@@ -480,13 +456,6 @@
     <!-- Floating Mute Button -->
     <button id="mute-btn" onclick="toggleMute()" class="mute-btn" title="Увімкнути/Вимкнути звук">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-    </button>
-    
-    <!-- Floating Stealth Logout Button -->
-    <button onclick="logout()" class="logout-btn" title="Вийти з акаунту">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-        </svg>
     </button>
 
     <script>
