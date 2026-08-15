@@ -1,17 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sound Moderation - KOSTIUCHENKO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KOSTIUCHENKO SOUNDBOARD</title>
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
-            --bg-color: #ffffff;
-            --text-main: #000000;
-            --btn-bg: #f2f2f2;
-            --accent: #d90000;
+            --bg-color: #0a0a0a;
+            --text-main: #ffffff;
+            --card-bg: #151515;
+            --accent: #ff003c;
+            --accent-glow: rgba(255, 0, 60, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body { 
@@ -20,15 +28,18 @@
             margin: 0; 
             background: var(--bg-color); 
             color: var(--text-main);
+            overflow-x: hidden;
         }
         
+        /* ЕКРАН ЛОГІНУ */
         #login-screen { 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
             height: 100vh; 
-            background: var(--bg-color); 
+            padding: 2rem;
+            background: radial-gradient(circle at center, #1a050a 0%, var(--bg-color) 100%);
         }
         
         #login-screen h1 {
@@ -37,190 +48,199 @@
             font-weight: 900;
             font-size: 2.5rem;
             margin-bottom: 2rem;
+            text-align: center;
+            text-shadow: 0 0 20px var(--accent-glow);
         }
 
         #login-screen input { 
             padding: 1.2rem; 
             margin: 0.5rem; 
-            width: 320px; 
-            background: var(--btn-bg);
-            border: none; 
-            border-radius: 50px; 
+            width: 100%; 
+            max-width: 320px;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.1); 
+            border-radius: 15px; 
             font-size: 1rem; 
             font-family: 'Montserrat', sans-serif;
             font-weight: 700; 
             text-align: center;
             outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #login-screen input:focus {
+            border-color: var(--accent);
         }
         
         #login-screen button { 
             padding: 1.2rem; 
-            width: 360px; 
-            background: var(--text-main); 
-            color: var(--bg-color); 
+            width: 100%; 
+            max-width: 320px;
+            background: var(--accent); 
+            color: white; 
             border: none; 
-            border-radius: 50px; 
+            border-radius: 15px; 
             cursor: pointer; 
             font-family: 'Montserrat', sans-serif;
             font-weight: 900; 
             font-size: 1.2rem; 
             margin-top: 1rem; 
             text-transform: uppercase;
-            transition: opacity 0.2s;
+            box-shadow: 0 10px 20px var(--accent-glow);
+            transition: transform 0.1s, box-shadow 0.2s;
         }
 
-        #login-screen button:hover {
-            opacity: 0.8;
-        }
-
-        #admin-panel { 
-            display: none; 
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 3rem 1rem; 
-        }
-
-        #admin-panel h1 {
-            color: var(--accent);
-            font-weight: 900;
-            text-transform: uppercase;
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        #admin-panel > p {
-            text-align: center;
-            font-weight: 700;
-            margin-bottom: 3rem;
-        }
-        
-        .card { 
-            background: var(--btn-bg); 
-            padding: 1.5rem; 
-            margin-bottom: 1.5rem; 
-            border-radius: 20px; 
-        }
-
-        .card p {
-            font-weight: 700;
-            margin: 0.5rem 0;
-            font-size: 1.1rem;
-        }
-
-        .actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .btn { 
-            flex: 1;
-            padding: 1rem; 
-            cursor: pointer; 
-            border: none; 
-            border-radius: 50px; 
-            color: var(--bg-color); 
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 900; 
-            font-size: 1.1rem; 
-            text-transform: uppercase;
-            transition: opacity 0.2s;
-        }
-
-        .btn:hover { opacity: 0.8; }
-        .btn-approve { background: var(--text-main); }
-        .btn-reject { background: var(--accent); }
-
-        /* Кастомізація аудіо плеєра */
-        audio {
-            width: 100%;
-            margin-top: 1rem;
-            border-radius: 50px;
+        #login-screen button:active {
+            transform: scale(0.95);
         }
 
         /* САУНДБОРД */
-        .soundboard-section {
-            margin-top: 4rem;
-            border-top: 4px solid var(--text-main);
-            padding-top: 2rem;
+        #admin-panel { 
+            display: none; 
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem; 
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            color: var(--accent);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            margin: 0 0 0.5rem 0;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .header p {
+            color: #888;
+            font-weight: 700;
+            margin: 0;
+            font-size: 0.9rem;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 15px;
-            margin-top: 2rem;
         }
 
         .sound-btn {
-            background: var(--text-main);
-            color: var(--bg-color);
-            border: none;
-            padding: 1.5rem;
+            background: var(--card-bg);
+            border: 2px solid rgba(255,255,255,0.05);
+            padding: 1.5rem 1rem;
             border-radius: 20px;
             cursor: pointer;
-            font-family: 'Montserrat', sans-serif;
-            transition: transform 0.1s, opacity 0.2s;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            min-height: 120px;
+            min-height: 140px;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
         }
 
-        .sound-btn:active {
-            transform: scale(0.95);
+        .sound-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,0,60,0.2) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .sound-btn:hover {
-            opacity: 0.8;
+            transform: translateY(-5px);
+            border-color: rgba(255,0,60,0.5);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px var(--accent-glow);
+        }
+
+        .sound-btn:hover::before {
+            opacity: 1;
+        }
+
+        .sound-btn:active {
+            transform: translateY(2px) scale(0.95);
         }
 
         .sound-btn .name {
+            font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             text-transform: uppercase;
-            color: var(--accent);
+            color: white;
             margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+            word-break: break-word;
         }
 
         .sound-btn .message {
+            font-family: 'Montserrat', sans-serif;
             font-weight: 700;
-            font-size: 0.9rem;
-            opacity: 0.9;
+            font-size: 0.8rem;
+            color: #aaa;
+            position: relative;
+            z-index: 1;
+            word-break: break-word;
         }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #555;
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            fill: #333;
+            margin-bottom: 1rem;
+        }
+
+        /* Анімація нового звуку */
+        @keyframes pulseNew {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px var(--accent-glow); border-color: var(--accent); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-glow); }
+        }
+
+        .new-sound {
+            animation: pulseNew 2s infinite;
+        }
+
     </style>
 </head>
 <body>
 
-    <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
-
     <!-- ЕКРАН ЛОГІНУ -->
     <div id="login-screen">
-        <h1 style="color: #d90000; margin-bottom: 2rem;">ВХІД (АДМІН)</h1>
-        <input type="text" id="username" placeholder="Логін">
+        <h1>САУНДБОРД</h1>
+        <input type="text" id="username" placeholder="Логін" value="костюченко">
         <input type="password" id="password" placeholder="Пароль">
         <button onclick="login()">УВІЙТИ</button>
-        <p id="login-error" style="color: #d90000; margin-top: 1rem; display: none;">Невірний логін або пароль!</p>
+        <p id="login-error" style="color: var(--accent); margin-top: 1rem; display: none; font-weight: 700;">Невірний пароль!</p>
     </div>
 
-    <!-- АДМІН ПАНЕЛЬ -->
+    <!-- АДМІН ПАНЕЛЬ (САУНДБОРД) -->
     <div id="admin-panel">
-        <h1>МОДЕРАЦІЯ ЗВУКІВ</h1>
-        <p>Ці звуки оплачені і чекають вашого підтвердження.</p>
-        <div id="donations">
-            <p style="text-align: center; font-weight: 700;">Завантаження...</p>
+        <div class="header">
+            <h1>LIVE SOUNDBOARD</h1>
+            <p>Усі донати з'являтимуться тут і відтворюватимуться автоматично</p>
         </div>
-
-        <div class="soundboard-section">
-            <h1>ВАШ САУНДБОРД</h1>
-            <p>Усі схвалені звуки з'являються тут. Натискайте, щоб відтворити!</p>
-            <div class="grid" id="sound-grid">
-                <!-- Звуки будуть тут -->
-            </div>
+        
+        <div class="grid" id="sound-grid">
+            <div class="empty-state">Завантаження...</div>
         </div>
     </div>
 
@@ -229,136 +249,93 @@
 
         // Listen for realtime updates
         const socket = io();
-        socket.on('connect', () => {
-            socket.emit('join_admin');
+        
+        // When a new payment is made, it auto-approves and emits this:
+        socket.on('new_approved_sound', (sound) => {
+            playSound(sound);
+            addSoundToGrid(sound, true); // true = isNew
         });
-
-        socket.on('new_donation_pending', () => {
-            alert('NEW DONATION PAID! Reloading...');
-            loadPending();
-        });
-
-        function getAuthHeader() {
-            return { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') };
-        }
 
         function login() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
             if (u.trim().toLowerCase() === 'костюченко' && p.trim() !== '') {
                 localStorage.setItem('admin_token', p.trim());
-                loadPending();
+                showBoard();
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
         }
 
-        async function loadPending() {
+        function showBoard() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('login-error').style.display = 'none';
+            loadSoundboard();
+        }
+
+        function playSound(sound) {
             try {
-                const res = await fetch(`${API_URL}/admin/pending`, { headers: getAuthHeader() });
-                
-                if (res.status === 401) {
-                    // Unauthorized
-                    document.getElementById('login-screen').style.display = 'flex';
-                    document.getElementById('admin-panel').style.display = 'none';
-                    document.getElementById('login-error').style.display = 'block';
-                    localStorage.removeItem('admin_token');
-                    return;
-                }
-
-                // Authorized
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
-                document.getElementById('login-error').style.display = 'none';
-
-                const donations = await res.json();
-                
-                const container = document.getElementById('donations');
-                container.innerHTML = '';
-                
-                if(donations.length === 0) {
-                    container.innerHTML = '<p style="text-align: center; font-weight: 700; color: #888;">Немає нових звуків для модерації.</p>';
-                    return;
-                }
-
-                donations.forEach(donation => {
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    div.innerHTML = `
-                        <p style="color: var(--accent); font-size: 1.2rem;">${donation.amount} ₴</p>
-                        <p><strong>ВІД КОГО:</strong> ${donation.customer_name}</p>
-                        <p><strong>ПОВІДОМЛЕННЯ:</strong> ${donation.message || '—'}</p>
-                        <audio controls>
-                            <source src="data:${donation.audio_type};base64,${donation.audio_base64}" type="${donation.audio_type}">
-                        </audio>
-                        <div class="actions">
-                            <button class="btn btn-approve" onclick="moderate('${donation.id}', 'APPROVED')">СХВАЛИТИ</button>
-                            <button class="btn btn-reject" onclick="moderate('${donation.id}', 'REJECTED')">ВІДХИЛИТИ</button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                console.error("Failed to load", err);
+                const audio = new Audio(`data:${sound.audio_type};base64,${sound.audio_base64}`);
+                audio.play().catch(e => console.log('Autoplay prevented by browser:', e));
+            } catch(e) {
+                console.error("Error playing sound", e);
             }
         }
 
-        async function moderate(id, status) {
-            try {
-                const res = await fetch(`${API_URL}/admin/moderate`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        ...getAuthHeader()
-                    },
-                    body: JSON.stringify({ donation_id: id, status })
-                });
-                
-                if (res.status === 401) {
-                    alert('Сесія закінчилась. Увійдіть ще раз.');
-                    loadPending();
-                    return;
-                }
+        function addSoundToGrid(sound, isNew = false) {
+            const grid = document.getElementById('sound-grid');
+            
+            // Remove empty state if present
+            const emptyState = grid.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
 
-                if(res.ok) {
-                    loadPending();
-                    loadSoundboard();
-                } else {
-                    alert('Помилка сервера');
-                }
-            } catch (err) {
-                console.error(err);
+            const btn = document.createElement('button');
+            btn.className = 'sound-btn';
+            if (isNew) {
+                btn.classList.add('new-sound');
+                // Remove animation after 10 seconds
+                setTimeout(() => btn.classList.remove('new-sound'), 10000);
+            }
+
+            btn.innerHTML = `
+                <div class="name">${sound.customer_name}</div>
+                <div class="message">${sound.message || ''}</div>
+            `;
+            
+            btn.onclick = () => playSound(sound);
+
+            // Prepend new sounds to the top
+            if (grid.firstChild) {
+                grid.insertBefore(btn, grid.firstChild);
+            } else {
+                grid.appendChild(btn);
             }
         }
 
-        // САУНДБОРД
         async function loadSoundboard() {
             try {
-                const res = await fetch(`${API_URL}/live/history`); // публічний ендпоінт, не потребує токена
+                // Dodated cache-busting to ensure mobile doesn't cache an empty array
+                const res = await fetch(`${API_URL}/live/history?t=${new Date().getTime()}`);
                 const sounds = await res.json();
+                
                 const grid = document.getElementById('sound-grid');
                 grid.innerHTML = '';
 
                 if (sounds.length === 0) {
-                    grid.innerHTML = '<p style="text-align: center; grid-column: 1 / -1; color: #888; font-weight: 700;">Саундборд порожній. Схваліть перший звук!</p>';
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.5 0-4.5-2-4.5-4.5h2c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5h2c0 2.5-2 4.5-4.5 4.5zm2-5.5H10V9h4v2z"/></svg>
+                            <h3>Поки що тихо</h3>
+                            <p>Тут з'являться звуки від ваших глядачів</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                sounds.forEach(sound => {
-                    const btn = document.createElement('button');
-                    btn.className = 'sound-btn';
-                    btn.innerHTML = `
-                        <div class="name">${sound.customer_name}</div>
-                        <div class="message">${sound.message || ''}</div>
-                    `;
-                    
-                    const audioSource = `data:${sound.audio_type};base64,${sound.audio_base64}`;
-                    btn.onclick = () => {
-                        const audio = new Audio(audioSource);
-                        audio.play();
-                    };
-                    grid.appendChild(btn);
-                });
+                // Sounds come ordered by DESC from DB, so we append them in order
+                sounds.forEach(sound => addSoundToGrid(sound, false));
+                
             } catch (err) {
                 console.error("Failed to load soundboard", err);
             }
@@ -366,8 +343,7 @@
 
         // Check if already logged in on load
         if (localStorage.getItem('admin_token')) {
-            loadPending();
-            loadSoundboard();
+            showBoard();
         }
     </script>
 </body>

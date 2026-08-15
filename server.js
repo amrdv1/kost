@@ -77,13 +77,17 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
     if (donationId) {
       try {
         await pool.query(
-          `UPDATE donations SET stripe_payment_id = $1, payment_status = 'PAID', audio_status = 'PENDING_MODERATION', updated_at = NOW() WHERE id = $2`,
+          `UPDATE donations SET stripe_payment_id = $1, payment_status = 'PAID', audio_status = 'APPROVED', updated_at = NOW() WHERE id = $2`,
           [paymentId, donationId]
         );
-        console.log('Payment processed for donation:', donationId);
+        console.log('Payment processed & instantly approved for donation:', donationId);
         
-        // Notify admins that a new donation needs moderation
-        io.to('admin').emit('new_donation_pending');
+        // Fetch the donation details to broadcast
+        const resDonation = await pool.query(`SELECT id, customer_name, message, audio_base64, audio_type FROM donations WHERE id = $1`, [donationId]);
+        if (resDonation.rowCount > 0) {
+          // Notify clients that a new sound is ready to play
+          io.emit('new_approved_sound', resDonation.rows[0]);
+        }
       } catch (err) {
         console.error('DB Update Error:', err);
       }
