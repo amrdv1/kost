@@ -129,10 +129,11 @@
             margin: 0;
         }
 
-        .file-upload-label svg {
-            width: 16px;
-            height: 16px;
+        .file-upload-label svg, #record-btn svg {
+            width: 24px;
+            height: 24px;
             fill: currentColor;
+            flex-shrink: 0;
         }
 
         .submit-btn {
@@ -627,7 +628,10 @@
 
                     recordBtn.innerHTML = `
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
-                        ЗАПИС (ДО 20С)
+                        <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                            <span>ЗАПИС</span>
+                            <span style="font-size: 0.9em; opacity: 0.9;">(ДО 20С)</span>
+                        </div>
                     `;
                     recordBtn.style.background = 'var(--text-main)';
 
