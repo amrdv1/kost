@@ -825,7 +825,7 @@
                     <span class="donation-time">${timeString}</span>
                 </div>
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}
-                ${isSoundDonation ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : `<div style="font-weight:700; color:#888;">(Без звуку)</div>`}
+                ${isSoundDonation ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : ''}
                 <div class="donation-actions">
                     ${isSoundDonation ? `<button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>` : ''}
                 </div>
