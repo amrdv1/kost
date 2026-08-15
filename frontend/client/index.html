@@ -298,8 +298,8 @@
                 font-size: 0.85rem;
             }
             #record-btn, .file-upload-label {
-                font-size: 0.7rem;
-                padding: 0;
+                font-size: 0.75rem;
+                padding: 0.8rem 0.5rem;
             }
         }
     </style>
@@ -334,12 +334,12 @@
             </div>
 
             <!-- Звичайні поля -->
-            <div id="data-fields" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+            <div id="data-fields" style="display: flex; flex-direction: column; width: 100%;">
                 <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" maxlength="50" required
-                    autocomplete="off">
+                    autocomplete="off" style="margin-bottom: 1rem;">
                 <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
-                    maxlength="250" autocomplete="off">
-                <div style="display: flex; gap: 10px; width: 100%;">
+                    maxlength="250" autocomplete="off" style="margin-bottom: 1rem;">
+                <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 1rem;">
                     <div class="file-upload-wrapper" style="flex: 1;">
                         <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*">
                         <label for="audio" class="pill-element file-upload-label" id="file-label-text">
@@ -347,7 +347,7 @@
                                 <path
                                     d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                             </svg>
-                            <span>ОБРАТИ АУДІО (ДО 20С)</span>
+                            <span>ФАЙЛ</span>
                         </label>
                     </div>
                     <button type="button" id="record-btn" class="pill-element"
@@ -356,7 +356,7 @@
                             <path
                                 d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
                         </svg>
-                        ЗАПИС (ДО 20С)
+                        ЗАПИС
                     </button>
                 </div>
                 <div id="preview-container" style="display: none; align-items: center; gap: 10px; width: 100%;">
