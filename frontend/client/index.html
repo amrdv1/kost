@@ -194,14 +194,21 @@
                 <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" required autocomplete="off">
                 <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
                     autocomplete="off">
-                <div class="file-upload-wrapper">
-                    <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*" required>
-                    <label for="audio" class="pill-element file-upload-label" id="file-label-text">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 2v12l-4-4-1.4 1.4L12 17.8l5.4-5.4L16 11l-4 4V2z M4 20v2h16v-2z" />
-                        </svg>
-                        <span>ОБРАТИ АУДІО (ДО 20 СЕК)</span>
-                    </label>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <div class="file-upload-wrapper" style="flex: 1;">
+                        <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*">
+                        <label for="audio" class="pill-element file-upload-label" id="file-label-text">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                            </svg>
+                            <span>ОБРАТИ АУДІО</span>
+                        </label>
+                    </div>
+                    <button type="button" id="record-btn" class="pill-element" style="flex: 1; padding: 0; background: var(--text-main); color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                        ЗАПИСАТИ
+                    </button>
                 </div>
             </div>
 
@@ -260,8 +267,10 @@
         const paymentContainer = document.getElementById('payment-container');
         const nameInput = document.getElementById('name');
         const messageInput = document.getElementById('message');
+        const recordBtn = document.getElementById('record-btn');
 
         let stripeMode = false;
+        let recordedFile = null;
 
         // UI Файлу
         function handleFileSelection(file) {
@@ -275,7 +284,66 @@
         }
 
         fileInput.addEventListener('change', function (e) {
+            if(fileInput.files.length > 0) {
+                recordedFile = null; // Зкидаємо запис, якщо обрали файл вручну
+            }
             handleFileSelection(fileInput.files[0]);
+        });
+
+        // Мікрофон
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingInterval;
+        let recordingTime = 0;
+
+        recordBtn.addEventListener('click', async () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                recordingTime = 0;
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    clearInterval(recordingInterval);
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    recordedFile = new File([audioBlob], "recorded_audio.webm", { type: 'audio/webm' });
+                    fileInput.value = ''; // очищаємо файл інпут
+                    
+                    recordBtn.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                        ЗАПИСАТИ
+                    `;
+                    recordBtn.style.background = 'var(--text-main)';
+                    
+                    fileLabel.querySelector('span').innerText = `ГОЛОСОВИЙ ЗАПИС (${recordingTime}С)`;
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                recordBtn.innerText = '🛑 0с';
+                recordBtn.style.background = 'var(--accent)';
+                
+                recordingInterval = setInterval(() => {
+                    recordingTime++;
+                    if (recordingTime >= 20) {
+                        mediaRecorder.stop();
+                    } else {
+                        recordBtn.innerText = `🛑 ${recordingTime}с`;
+                    }
+                }, 1000);
+            } catch (err) {
+                alert('Помилка доступу до мікрофону: ' + err.message);
+            }
         });
 
         // Drag and Drop
@@ -357,11 +425,11 @@
             }
 
             // --- ФАЗА 1: ЗАВАНТАЖЕННЯ ДАНИХ І ГЕНЕРАЦІЯ ВІДЖЕТУ STRIPE ---
-            const file = fileInput.files[0];
+            const file = recordedFile || fileInput.files[0];
             const name = nameInput.value;
             const message = messageInput.value;
 
-            if (!file) return showError('ОБЕРІТЬ ФАЙЛ!');
+            if (!file) return showError('ОБЕРІТЬ ФАЙЛ АБО ЗАПИШІТЬ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
             if (file.size > 10 * 1024 * 1024) return showError('ФАЙЛ ЗАНАДТО ВЕЛИКИЙ (МАКС 10MB)');
 
