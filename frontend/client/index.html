@@ -320,7 +320,7 @@
                 </div>
 
                 <div class="amount-wrapper">
-                    <input type="number" id="amount" placeholder="200" min="20" required autocomplete="off">
+                    <input type="number" id="amount" placeholder="200" min="50" required autocomplete="off">
                     <div class="currency-symbol">₴</div>
                 </div>
 
@@ -329,7 +329,7 @@
                         <path
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                     </svg>
-                    <span>Мінімум 20 ₴. Звук на стрім — від 500 ₴.</span>
+                    <span>Мінімум 50 ₴. Звук на стрім — від 500 ₴.</span>
                 </div>
             </div>
 
@@ -693,7 +693,7 @@
             const message = messageInput.value;
             const amount = parseInt(amountInput.value, 10);
 
-            if (isNaN(amount) || amount < 20) return showError('МІНІМАЛЬНА СУМА 20 ₴');
+            if (isNaN(amount) || amount < 50) return showError('МІНІМАЛЬНА СУМА 50 ₴');
             if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 ₴ НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
             if (name.length > 50) return showError('ІМ\'Я ЗАНАДТО ДОВГЕ (МАКС 50)');

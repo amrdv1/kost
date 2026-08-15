@@ -134,7 +134,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     if (message && message.length > 250) return res.status(400).json({ error: 'Повідомлення занадто довге (макс 250 символів)' });
     if (message && urlRegex.test(message)) return res.status(400).json({ error: 'Посилання заборонені!' });
 
-    if (isNaN(donationAmount) || donationAmount < 20) return res.status(400).json({ error: 'Мінімальна сума 20 грн' });
+    if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
 
     if (donationAmount >= 500 && !file) {
       return res.status(400).json({ error: 'Для донату від 500 грн необхідно прикріпити звук' });
