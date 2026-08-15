@@ -304,19 +304,22 @@
         }
 
         .mute-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 44px;
+            width: 54px;
+            height: 54px;
             background: #ffffff;
             color: var(--text-main);
             border-radius: 50%;
             border: none;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             outline: none;
         }
         
@@ -412,9 +415,6 @@
                         <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
                         <p style="margin-top: 0.5rem; margin-bottom: 0;">Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
                     </div>
-                    <button id="mute-btn" onclick="toggleMute()" class="mute-btn" title="Увімкнути/Вимкнути звук">
-                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                    </button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
@@ -456,6 +456,11 @@
 
     <!-- Active Alerts Pop Here -->
     <div id="alert-container"></div>
+
+    <!-- Floating Mute Button -->
+    <button id="mute-btn" onclick="toggleMute()" class="mute-btn" title="Увімкнути/Вимкнути звук">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </button>
 
     <script>
         const API_URL = '/api';
