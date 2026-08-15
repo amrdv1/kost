@@ -711,8 +711,8 @@
                 voiceGrid.innerHTML = emptyHTML;
                 normalGrid.innerHTML = emptyHTML;
 
-                // Add a small delay for stagger effect
-                sounds.forEach((sound, index) => {
+                // Add a small delay for stagger effect, reversing to prepend oldest first, newest last
+                sounds.reverse().forEach((sound, index) => {
                     setTimeout(() => {
                         addSoundToGrid(sound, false);
                     }, index * 100); // 100ms stagger between each card
