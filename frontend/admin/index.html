@@ -252,8 +252,7 @@
         
         // When a new payment is made, it auto-approves and emits this:
         socket.on('new_approved_sound', (sound) => {
-            playSound(sound);
-            addSoundToGrid(sound, true); // true = isNew
+            addSoundToGrid(sound, true); // true = isNew, just add button, no autoplay!
         });
 
         function login() {
