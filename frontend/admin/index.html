@@ -356,6 +356,21 @@
 
 <body>
 
+    <!-- MODAL FOR EDITING STATUS -->
+    <div id="status-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 2000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s;">
+        <div style="background: var(--bg-color); padding: 2.5rem; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: translateY(-20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <h2 style="margin-top: 0; font-weight: 900; color: var(--accent); text-transform: uppercase; font-size: 1.5rem; margin-bottom: 0.5rem;">Оновити статус</h2>
+            <p id="modal-track-name" style="margin-top: 0; color: #888; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase;">Трек 1</p>
+            
+            <input type="text" id="status-input" style="width: 100%; padding: 1rem; border-radius: 10px; border: 2px solid rgba(0,0,0,0.1); font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 1.5rem; outline: none; transition: border-color 0.2s; box-sizing: border-box; background: transparent; color: var(--text-main);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='rgba(0,0,0,0.1)'" onkeypress="if(event.key === 'Enter') saveStatusModal()">
+            
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="closeStatusModal()" style="flex: 1; padding: 1rem; border-radius: 10px; border: none; background: rgba(0,0,0,0.05); color: var(--text-main); font-weight: 900; cursor: pointer; transition: opacity 0.2s; text-transform: uppercase;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">Скасувати</button>
+                <button onclick="saveStatusModal()" style="flex: 1; padding: 1rem; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 900; cursor: pointer; transition: opacity 0.2s; text-transform: uppercase;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">Зберегти</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ЕКРАН ЛОГІНУ -->
     <div id="login-screen">
         <h1>ДОНАТИ АДМІНКА</h1>
@@ -594,26 +609,57 @@
                 }
                 
                 container.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0;">
                         <span>${item.label}</span>
-                        <span onclick="editStatus('${item.id}', '${val}')" style="cursor: pointer; color: ${color}; font-size: 0.85rem; text-transform: uppercase; background: ${bg}; padding: 2px 8px; border-radius: 10px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" title="Натисніть щоб змінити">
-                            ${val} ✎
+                        <span onclick="editStatus('${item.id}', '${val}', '${item.label}')" style="cursor: pointer; color: ${color}; font-size: 0.85rem; text-transform: uppercase; background: ${bg}; padding: 4px 10px; border-radius: 12px; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'" title="Натисніть щоб змінити">
+                            ${val}
                         </span>
                     </div>
                 `;
             });
         }
 
-        async function editStatus(key, currentVal) {
-            const newVal = prompt("Введіть новий статус (Готово, Зведення, Демо, В процесі, Ідея...):", currentVal);
-            if (newVal !== null && newVal.trim() !== "") {
+        let currentEditKey = null;
+
+        function editStatus(key, currentVal, label) {
+            currentEditKey = key;
+            document.getElementById('modal-track-name').innerText = label;
+            document.getElementById('status-input').value = currentVal;
+            
+            const modal = document.getElementById('status-modal');
+            modal.style.display = 'flex';
+            // Trigger reflow for animation
+            void modal.offsetWidth;
+            modal.style.opacity = '1';
+            modal.querySelector('div').style.transform = 'translateY(0)';
+            
+            document.getElementById('status-input').focus();
+            document.getElementById('status-input').select();
+        }
+
+        function closeStatusModal() {
+            const modal = document.getElementById('status-modal');
+            modal.style.opacity = '0';
+            modal.querySelector('div').style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                currentEditKey = null;
+            }, 300);
+        }
+
+        async function saveStatusModal() {
+            if (!currentEditKey) return;
+            const newVal = document.getElementById('status-input').value;
+            
+            if (newVal.trim() !== "") {
                 try {
                     await fetch(`${API_URL}/admin/settings`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ key, value: newVal.trim() })
+                        body: JSON.stringify({ key: currentEditKey, value: newVal.trim() })
                     });
                     loadAlbumSettings(); // Reload instantly
+                    closeStatusModal();
                 } catch(e) {
                     alert("Помилка збереження");
                 }
