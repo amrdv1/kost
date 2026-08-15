@@ -173,9 +173,7 @@
         /* САУНДБОРД */
         #admin-panel {
             display: none;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
+            width: 100%;
         }
 
         .header {
@@ -346,6 +344,13 @@
             animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, pulseNew 2s infinite !important;
             border: 2px solid var(--accent);
         }
+
+        @media (max-width: 900px) {
+            .admin-layout { flex-direction: column; }
+            .admin-layout > div:last-child { width: 100% !important; position: static !important; }
+            .admin-layout > div:first-child > div:last-child { grid-template-columns: 1fr !important; }
+            .admin-layout .header { text-align: center !important; }
+        }
     </style>
 </head>
 
@@ -363,29 +368,51 @@
 
     <!-- АДМІН ПАНЕЛЬ (САУНДБОРД / ІСТОРІЯ) -->
     <div id="admin-panel">
+        <div class="admin-layout" style="display: flex; gap: 3rem; max-width: 1400px; margin: 0 auto; padding: 2rem; align-items: flex-start;">
+            
+            <!-- Left Side: History -->
+            <div style="flex: 1; min-width: 0;">
+                <div class="header" style="text-align: left; margin-bottom: 2rem; padding-bottom: 0;">
+                    <h1 style="font-size: 2.5rem;">ІСТОРІЯ ДОНАТІВ</h1>
+                    <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
+                </div>
 
-        <div class="header">
-            <h1>ІСТОРІЯ ДОНАТІВ</h1>
-            <p>Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-            <div>
-                <h2 style="text-align: center; color: var(--accent); font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВУКОВІ ДОНАТИ</h2>
-                <div class="feed" id="voice-feed">
-                    <div class="empty-state">Завантаження...</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h2 style="text-align: center; color: var(--accent); font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВУКОВІ ДОНАТИ</h2>
+                        <div class="feed" id="voice-feed">
+                            <div class="empty-state">Завантаження...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 style="text-align: center; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВИЧАЙНІ ДОНАТИ</h2>
+                        <div class="feed" id="normal-feed">
+                            <div class="empty-state">Завантаження...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div>
-                <h2 style="text-align: center; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em;">ЗВИЧАЙНІ ДОНАТИ</h2>
-                <div class="feed" id="normal-feed">
-                    <div class="empty-state">Завантаження...</div>
+
+            <!-- Right Side: Sidebar -->
+            <div style="width: 320px; flex-shrink: 0; position: sticky; top: 2rem;">
+                <div style="background: var(--btn-bg); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                    <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; text-transform: uppercase;">Прийняти участь:</h3>
+                    <a href="https://KOSTIUCHENKO.CO.UK" style="display: inline-block; font-size: 1.2rem; font-weight: 900; color: var(--accent); text-decoration: none; margin-bottom: 2rem; border-bottom: 2px solid var(--accent);">KOSTIUCHENKO.CO.UK</a>
+                    
+                    <h4 style="margin: 0 0 0.5rem 0; text-transform: uppercase; color: #888; font-size: 0.9rem;">За участю (feat):</h4>
+                    <p style="margin: 0 0 2rem 0; font-weight: 700; font-size: 1rem; line-height: 1.5;">
+                        clonnex, Savlepov, ngvoi24, kissesfromeldar
+                    </p>
+
+                    <h4 style="margin: 0 0 0.5rem 0; text-transform: uppercase; color: #888; font-size: 0.9rem;">Що готується:</h4>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-weight: 700; font-size: 1rem; line-height: 1.6;">
+                        <li>7 треків</li>
+                        <li>Обкладинка</li>
+                        <li>Кліп</li>
+                    </ul>
                 </div>
             </div>
-        </div>
 
-        <div style="text-align: center; margin-top: 4rem; margin-bottom: 2rem; font-weight: 700; color: #888; font-size: 0.9rem;">
-            Прийняти участь на <a href="https://KOSTIUCHENKO.CO.UK" style="color: var(--text-main); text-decoration: none; border-bottom: 2px solid var(--text-main);">KOSTIUCHENKO.CO.UK</a>
         </div>
     </div>
 
