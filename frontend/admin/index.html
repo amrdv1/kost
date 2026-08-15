@@ -363,11 +363,6 @@
 
     <!-- АДМІН ПАНЕЛЬ (САУНДБОРД / ІСТОРІЯ) -->
     <div id="admin-panel">
-        
-        <div style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.05); padding: 10px 20px; border-radius: 10px; z-index: 100;">
-            <label style="font-weight: 900; font-size: 0.8rem;">ГУЧНІСТЬ АЛЕРТІВ:</label><br>
-            <input type="range" id="master-volume" min="0" max="100" value="100" style="width: 150px;">
-        </div>
 
         <div class="header">
             <h1>ІСТОРІЯ ДОНАТІВ</h1>
@@ -404,13 +399,7 @@
         const socket = io();
 
         // Volume control
-        let masterVolume = localStorage.getItem('sound_volume') ? parseFloat(localStorage.getItem('sound_volume')) : 1.0;
-        const volInput = document.getElementById('master-volume');
-        volInput.value = masterVolume * 100;
-        volInput.addEventListener('input', (e) => {
-            masterVolume = e.target.value / 100;
-            localStorage.setItem('sound_volume', masterVolume);
-        });
+        let masterVolume = 1.0;
 
         // --- WEB AUDIO API FOR NOTIFICATIONS ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -543,7 +532,8 @@
         }
 
         function addSoundToGrid(sound, isNew = false) {
-            const isSoundDonation = sound.amount >= 500 && sound.audio_base64;
+            const hasAudio = sound.audio_base64 && sound.audio_base64.length > 50 && sound.audio_base64 !== 'null';
+            const isSoundDonation = sound.amount >= 500 && hasAudio;
             const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
             const grid = document.getElementById(targetGridId);
 
@@ -578,9 +568,9 @@
                     <span class="donation-time">${timeString}</span>
                 </div>
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}
-                ${sound.audio_base64 ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : `<div style="font-weight:700; color:#888;">(Без звуку)</div>`}
+                ${isSoundDonation ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : `<div style="font-weight:700; color:#888;">(Без звуку)</div>`}
                 <div class="donation-actions">
-                    ${sound.audio_base64 ? `<button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>` : ''}
+                    ${isSoundDonation ? `<button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>` : ''}
                 </div>
             `;
 
