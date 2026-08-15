@@ -270,6 +270,36 @@
 
         .info-badge svg {
             color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .amount-wrapper input {
+                font-size: 2.5rem;
+                height: 70px;
+            }
+            .amount-wrapper .currency-symbol {
+                font-size: 1.5rem;
+                right: 1.2rem;
+            }
+            .info-badge {
+                font-size: 0.72rem;
+                white-space: nowrap;
+            }
+            .pill-element {
+                padding: 1rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            #record-btn, .file-upload-label {
+                font-size: 0.7rem;
+                padding: 0;
+            }
         }
     </style>
 </head>
@@ -298,7 +328,7 @@
                         <path
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                     </svg>
-                    <span>Мінімум 20 ₴. Щоб відправити звук на стрім — від 500 ₴.</span>
+                    <span>Мінімум 20 ₴. Звук на стрім — від 500 ₴.</span>
                 </div>
             </div>
 
