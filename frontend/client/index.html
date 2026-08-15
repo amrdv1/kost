@@ -291,8 +291,8 @@
 
             <!-- Звичайні поля -->
             <div id="data-fields" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
-                <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" required autocomplete="off">
-                <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
+                <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" maxlength="50" required autocomplete="off">
+                <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)" maxlength="250"
                     autocomplete="off">
                 <div style="display: flex; gap: 10px; width: 100%;">
                     <div class="file-upload-wrapper" style="flex: 1;">
@@ -642,6 +642,12 @@
             if (isNaN(amount) || amount < 20) return showError('МІНІМАЛЬНА СУМА 20 ₴');
             if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 ₴ НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
+            if (name.length > 50) return showError('ІМ\'Я ЗАНАДТО ДОВГЕ (МАКС 50)');
+            if (message && message.length > 250) return showError('ПОВІДОМЛЕННЯ ЗАНАДТО ДОВГЕ (МАКС 250)');
+            
+            const urlRegex = /(https?:\/\/|www\.|[a-zA-Z0-9-]+\.(com|ru|ua|net|org|me|co|live|io|uk))/i;
+            if (urlRegex.test(name) || urlRegex.test(message)) return showError('ПОСИЛАННЯ ЗАБОРОНЕНІ!');
+
             if (file && file.size > 10 * 1024 * 1024) return showError('ФАЙЛ ЗАНАДТО ВЕЛИКИЙ (МАКС 10MB)');
             
             // Limit check on frontend
