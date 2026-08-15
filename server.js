@@ -136,7 +136,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 
-       VALUES ($1, $2, 200, $3, $4) RETURNING id`,
+       VALUES ($1, $2, 500, $3, $4) RETURNING id`,
       [name, message || '', base64Audio, mimeType]
     );
 
@@ -158,7 +158,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).json({ error: 'Donation not found' });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 200 * 100, // 200 UAH
+      amount: 500 * 100, // 500 UAH
       currency: 'uah',
       metadata: { donation_id: donation_id },
       automatic_payment_methods: { enabled: true },
