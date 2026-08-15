@@ -381,28 +381,26 @@
         }
 
         .logout-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 9999;
             display: flex;
             align-items: center;
-            padding: 8px 24px;
-            font-size: 0.95rem;
+            padding: 10px;
+            font-size: 0.9rem;
             font-weight: 900;
             font-family: 'Montserrat', sans-serif;
-            margin-left: 20px;
-            background: var(--btn-bg);
-            color: var(--text-main);
+            background: transparent;
+            color: rgba(0, 0, 0, 0.15);
             border: none;
-            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         
         .logout-btn:hover {
-            background: var(--accent);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(217, 0, 0, 0.25);
+            color: rgba(0, 0, 0, 0.4);
         }
 
         @media (max-width: 900px) {
@@ -434,15 +432,7 @@
             <div style="flex: 1; min-width: 0;">
                 <div class="header" style="text-align: left; margin-bottom: 2rem; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                     <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
-                            <button onclick="logout()" class="logout-btn">
-                                ВИЙТИ
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-left: 8px;">
-                                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-                                </svg>
-                            </button>
-                        </div>
+                        <h1 style="font-size: 2.5rem; line-height: 1.2;">ІСТОРІЯ ДОНАТІВ</h1>
                         <p style="margin-top: 0.5rem; margin-bottom: 0;">Усі донати та звуки з'являтимуться тут. Тримайте сторінку відкритою під час стріму для сповіщень!</p>
                     </div>
                 </div>
@@ -490,6 +480,13 @@
     <!-- Floating Mute Button -->
     <button id="mute-btn" onclick="toggleMute()" class="mute-btn" title="Увімкнути/Вимкнути звук">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    </button>
+    
+    <!-- Floating Stealth Logout Button -->
+    <button onclick="logout()" class="logout-btn" title="Вийти з акаунту">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+        </svg>
     </button>
 
     <script>
