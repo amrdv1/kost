@@ -665,8 +665,13 @@
 
         // Обробка системної кнопки "Назад" у браузері
         window.addEventListener('popstate', (e) => {
-            if (stripeMode) {
+            if (window.location.hash !== '#payment' && stripeMode) {
+                // Користувач натиснув "Назад"
                 cancelPaymentFlow();
+            } else if (window.location.hash === '#payment' && !stripeMode) {
+                // Користувач натиснув "Вперед", але сесія оплати вже скасована.
+                // Примусово очищаємо URL.
+                history.replaceState(null, '', window.location.pathname + window.location.search);
             }
         });
 
