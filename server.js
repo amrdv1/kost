@@ -496,51 +496,6 @@ app.get('/api/admin/settings', async (req, res) => {
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: 'Database error' });
-  }
-});
-
-// TEMP DEV ENDPOINT: Seed Database
-app.get('/api/dev/seed', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM donations');
-
-    // Ordinary donation 1
-    await pool.query(`
-      INSERT INTO donations (customer_name, message, amount, currency, payment_status, audio_status)
-      VALUES ('Степан', 'Бро, давай рви чарти!', 150.00, 'UAH', 'PAID', 'PENDING_PAYMENT')
-    `);
-
-    // Ordinary donation 2
-    await pool.query(`
-      INSERT INTO donations (customer_name, message, amount, currency, payment_status, audio_status)
-      VALUES ('Анонім', 'Просто на каву', 50.00, 'UAH', 'PAID', 'PENDING_PAYMENT')
-    `);
-
-    const dummyAudio = "data:audio/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwH/////////FUmpZpkq17GDD0JATYCGQ2hyb21lV0GGQ2hyb21lFlSua7+uvdeBAXPFh2xG8oXw4L+DgQKGhkFfT1BVU2Oik09wdXNIZWFkAQEAAIC7AAAAAADhjbWERqqflzxAA==";
-    
-    // Voice donation 1
-    await pool.query(`
-      INSERT INTO donations (customer_name, message, amount, currency, payment_status, audio_status, audio_base64, audio_type)
-      VALUES ('Макс', 'Оце звук!', 500.00, 'UAH', 'PAID', 'APPROVED', $1, 'audio/webm')
-    `, [dummyAudio]);
-
-    // Voice donation 2
-    await pool.query(`
-      INSERT INTO donations (customer_name, message, amount, currency, payment_status, audio_status, audio_base64, audio_type)
-      VALUES ('Оля', 'Привіт зі Львова, дуже чекаю на альбом!', 1000.00, 'UAH', 'PAID', 'APPROVED', $1, 'audio/webm')
-    `, [dummyAudio]);
-
-    // Trigger websocket update
-    const statsRes = await pool.query("SELECT COUNT(*) as count FROM donations WHERE audio_status = 'APPROVED' AND amount >= 500");
-    const count = parseInt(statsRes.rows[0].count) || 0;
-    io.to('admin').emit('new_donation', { update: true });
-    io.to('admin').emit('stats_update', { count, limit: 50 });
-
-    res.send('Database seeded with dummy donations!');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error seeding DB');
-  }
 });
 
 // Admin API: Update album settings
