@@ -371,7 +371,6 @@
             height: 64px;
             fill: var(--text-main);
             margin-bottom: 1rem;
-            animation: bounce 2s infinite ease-in-out;
         }
 
         /* Анімація появи карток */
@@ -388,6 +387,15 @@
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulseHeart {
+            0% { transform: scale(1); fill: var(--text-main); }
+            15% { transform: scale(1.15); fill: var(--accent); }
+            30% { transform: scale(1); fill: var(--text-main); }
+            45% { transform: scale(1.15); fill: var(--accent); }
+            60% { transform: scale(1); fill: var(--text-main); }
+            100% { transform: scale(1); fill: var(--text-main); }
         }
 
         /* Анімація пульсування нового звуку */
@@ -966,16 +974,24 @@
                 const voiceGrid = document.getElementById('voice-feed');
                 const normalGrid = document.getElementById('normal-feed');
                 
-                const emptyHTML = `
+                const voiceEmptyHTML = `
                     <div class="empty-state">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.5 0-4.5-2-4.5-4.5h2c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5h2c0 2.5-2 4.5-4.5 4.5zm2-5.5H10V9h4v2z"/></svg>
+                        <svg viewBox="0 0 24 24" style="animation: bounce 2s infinite ease-in-out;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                         <h3>Поки що тихо</h3>
                         <p>Тут з'являться звуки від ваших глядачів</p>
                     </div>
                 `;
 
-                voiceGrid.innerHTML = emptyHTML;
-                normalGrid.innerHTML = emptyHTML;
+                const normalEmptyHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" style="animation: pulseHeart 1.5s infinite;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <h3>Поки що тихо</h3>
+                        <p>Тут з'являться звичайні донати</p>
+                    </div>
+                `;
+
+                voiceGrid.innerHTML = voiceEmptyHTML;
+                normalGrid.innerHTML = normalEmptyHTML;
 
                 // Add a small delay for stagger effect, reversing to prepend oldest first, newest last
                 sounds.reverse().forEach((sound, index) => {
