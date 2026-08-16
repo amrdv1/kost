@@ -496,6 +496,7 @@ app.get('/api/admin/settings', async (req, res) => {
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Admin API: Update album settings
