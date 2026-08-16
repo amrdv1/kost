@@ -352,6 +352,8 @@
                 </div>
             </div>
 
+            <div id="error-msg" style="margin-bottom: 1rem;"></div>
+
             <!-- Звичайні поля -->
             <div id="data-fields" style="display: flex; flex-direction: column; width: 100%;">
                 <!-- Honeypot: invisible to humans, bots will fill it -->
@@ -413,7 +415,6 @@
             </div>
 
             <button type="submit" class="pill-element submit-btn" id="submit-btn">Продовжити</button>
-            <div id="error-msg"></div>
         </form>
     </div>
 
@@ -437,11 +438,12 @@
                 const dataStatus = await resStatus.json();
                 const count = dataStatus.count;
 
-                document.getElementById('progress-text').innerText = `ЗАПОВНЕНО ${count} З 50 ЗВУКІВ`;
-                document.getElementById('progress-fill').style.width = `${(count / 50) * 100}%`;
+                const displayCount = Math.min(count, 50);
+                document.getElementById('progress-text').innerText = `ЗАПОВНЕНО ${displayCount} З 50 ЗВУКІВ`;
+                document.getElementById('progress-fill').style.width = `${(displayCount / 50) * 100}%`;
 
                 if (count >= 50) {
-                    showError('ЛІМІТ ЗВУКІВ (50/50) ВИЧЕРПАНО!');
+                    showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! Можливі лише донати без звуку (до 499 грн).');
                 }
 
                 // Check for payment error redirect
