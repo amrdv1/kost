@@ -34,6 +34,27 @@
             text-transform: uppercase;
         }
 
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--btn-bg);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cccccc;
+            border-radius: 10px;
+            border: 3px solid var(--btn-bg);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-main);
+        }
+
         /* --- ALERTS CONTAINER (from live) --- */
         #alert-container {
             position: fixed;
