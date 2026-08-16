@@ -445,6 +445,21 @@
                         <div class="empty-state" style="padding: 0;">Завантаження...</div>
                     </div>
                 </div>
+                </div>
+
+                <!-- Fake Donate Tools -->
+                <div style="background: var(--btn-bg); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 1.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; text-transform: uppercase; color: var(--accent);">ТЕСТУВАННЯ</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <button onclick="triggerFakeDonate('sound')" style="background: #111; color: white; border: none; padding: 1rem; border-radius: 15px; font-family: inherit; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            + ЗВУКОВИЙ ДОНАТ (500 ₴)
+                        </button>
+                        <button onclick="triggerFakeDonate('normal')" style="background: white; color: #111; border: 2px solid #ddd; padding: 1rem; border-radius: 15px; font-family: inherit; font-weight: 700; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='#111'" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#ddd'">
+                            + ЗВИЧАЙНИЙ ДОНАТ (50 ₴)
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -760,6 +775,24 @@
                     </div>
                 `;
             });
+        }
+
+        async function triggerFakeDonate(type) {
+            try {
+                const amount = type === 'sound' ? 500 : 50;
+                const name = 'ТЕСТ ' + Math.floor(Math.random() * 1000);
+                const msg = type === 'sound' ? 'Перевірка звукового донату з адмінки!' : 'Перевірка звичайного донату з адмінки!';
+                
+                const res = await fetch(`${API_URL}/fake-donate?type=${type}&amount=${amount}&name=${encodeURIComponent(name)}&msg=${encodeURIComponent(msg)}`);
+                if (res.ok) {
+                    console.log('Fake donate triggered!');
+                    // it will auto-appear via socket, no need to refresh manually
+                } else {
+                    alert('Помилка при створенні фейкового донату.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function showAuthErrorModal(message) {
