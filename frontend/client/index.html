@@ -597,7 +597,28 @@
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                
+                // Detect supported MIME type (Safari/iOS = mp4, Chrome/Firefox = webm)
+                let mimeType = 'audio/webm';
+                let fileExt = 'webm';
+                if (typeof MediaRecorder.isTypeSupported === 'function') {
+                    if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        mimeType = 'audio/webm';
+                        fileExt = 'webm';
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        mimeType = 'audio/mp4';
+                        fileExt = 'mp4';
+                    } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                        mimeType = 'audio/ogg';
+                        fileExt = 'ogg';
+                    } else {
+                        // Fallback: let the browser decide
+                        mimeType = '';
+                        fileExt = 'wav';
+                    }
+                }
+                
+                mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
                 audioChunks = [];
                 recordingTime = 0;
 
@@ -637,8 +658,9 @@
                     if (audioContext) audioContext.close();
                     recordBtn.style.boxShadow = 'none';
 
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    recordedFile = new File([audioBlob], "recorded_audio.webm", { type: 'audio/webm' });
+                    const actualMime = mimeType || 'audio/wav';
+                    const audioBlob = new Blob(audioChunks, { type: actualMime });
+                    recordedFile = new File([audioBlob], `recorded_audio.${fileExt}`, { type: actualMime });
                     fileInput.value = ''; // очищаємо файл інпут
 
                     // Show preview for recorded file
@@ -656,7 +678,8 @@
                     `;
                     recordBtn.style.background = 'var(--text-main)';
 
-                    fileLabel.querySelector('span').innerText = `ГОЛОСОВИЙ ЗАПИС (${recordingTime}С)`;
+                    document.getElementById('file-label-name').innerText = `ЗАПИС (${recordingTime}С)`;
+                    document.getElementById('file-label-sub').innerText = '✓';
 
                     stream.getTracks().forEach(track => track.stop());
                 };
