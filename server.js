@@ -217,9 +217,13 @@ function filterProfanity(text) {
   return text.replace(badWordsRegex, '***');
 }
 
-// --- UPLOAD API (rate limited) ---
+// --- UPLOAD API (rate limited in production) ---
 
-app.post('/api/upload', uploadLimiter, upload.single('audio'), async (req, res) => {
+const uploadMiddleware = TEST_MODE
+  ? [upload.single('audio')]
+  : [uploadLimiter, upload.single('audio')];
+
+app.post('/api/upload', ...uploadMiddleware, async (req, res) => {
   try {
     const { name, message, amount } = req.body;
     const file = req.file;
@@ -232,32 +236,34 @@ app.post('/api/upload', uploadLimiter, upload.single('audio'), async (req, res) 
     if (message && message.length > 250) return res.status(400).json({ error: 'Повідомлення занадто довге (макс 250 символів)' });
     if (message && urlRegex.test(message)) return res.status(400).json({ error: 'Посилання заборонені!' });
 
-    // Honeypot: if hidden field is filled, it's a bot
-    if (req.body.website) {
-      console.log('Honeypot triggered from IP:', req.ip);
-      return res.status(400).json({ error: 'Invalid request' });
-    }
-
-    // Time-based anti-bot: check submission timestamp
-    const submitTime = parseInt(req.body._t, 10) || 0;
-    const timeDiff = Date.now() - submitTime;
-    if (submitTime > 0 && timeDiff < 3000) {
-      // Form filled in less than 3 seconds = likely bot
-      console.log('Speed bot detected from IP:', req.ip, 'filled in', timeDiff, 'ms');
-      return res.status(400).json({ error: 'Занадто швидко. Спробуйте ще раз.' });
-    }
-
-    // Duplicate detection: same name+message from same IP within 2 minutes
-    const ip = req.ip || req.connection.remoteAddress;
-    const contentHash = simpleHash(name + (message || '') + amount);
-    const prevSubmission = recentSubmissions.get(ip);
-    if (prevSubmission) {
-      const timeSinceLast = Date.now() - prevSubmission.lastSubmitTime;
-      if (prevSubmission.lastHash === contentHash && timeSinceLast < 120000) {
-        return res.status(400).json({ error: 'Цей донат вже було надіслано. Зачекайте 2 хвилини.' });
+    // Anti-spam checks (skipped in TEST_MODE)
+    if (!TEST_MODE) {
+      // Honeypot: if hidden field is filled, it's a bot
+      if (req.body.website) {
+        console.log('Honeypot triggered from IP:', req.ip);
+        return res.status(400).json({ error: 'Invalid request' });
       }
+
+      // Time-based anti-bot: check submission timestamp
+      const submitTime = parseInt(req.body._t, 10) || 0;
+      const timeDiff = Date.now() - submitTime;
+      if (submitTime > 0 && timeDiff < 3000) {
+        console.log('Speed bot detected from IP:', req.ip, 'filled in', timeDiff, 'ms');
+        return res.status(400).json({ error: 'Занадто швидко. Спробуйте ще раз.' });
+      }
+
+      // Duplicate detection: same name+message from same IP within 2 minutes
+      const ip = req.ip || req.connection.remoteAddress;
+      const contentHash = simpleHash(name + (message || '') + amount);
+      const prevSubmission = recentSubmissions.get(ip);
+      if (prevSubmission) {
+        const timeSinceLast = Date.now() - prevSubmission.lastSubmitTime;
+        if (prevSubmission.lastHash === contentHash && timeSinceLast < 120000) {
+          return res.status(400).json({ error: 'Цей донат вже було надіслано. Зачекайте 2 хвилини.' });
+        }
+      }
+      recentSubmissions.set(ip, { lastSubmitTime: Date.now(), lastHash: contentHash });
     }
-    recentSubmissions.set(ip, { lastSubmitTime: Date.now(), lastHash: contentHash });
 
     if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
 
