@@ -36,42 +36,60 @@
     </style>
 </head>
 <body>
+    <!-- Hidden start button: Top Left, small dark gray circle -->
+    <div id="start-btn" style="position: absolute; top: 15px; left: 15px; width: 15px; height: 15px; background: #222; border-radius: 50%; cursor: pointer; z-index: 9999;" title="Start 72h Countdown"></div>
+    
     <div id="day-label">DAY 1</div>
     <div id="countdown">00:00:00</div>
 
     <script>
-        // === НАЛАШТУВАННЯ ЧАСУ ===
-
-        // Цільовий час: Середа, 19 серпня 2026, 20:00 за Британським часом (BST = UTC+1)
-        // Якщо потрібно на 00:00 - змініть 20:00:00 на 00:00:00
-        const targetDate = new Date("2026-08-19T20:00:00+01:00").getTime();
-        
-        // Початкова дата для розрахунку "DAY 1": Понеділок, 17 серпня 2026, 00:00 Британського часу
-        const startDate = new Date("2026-08-17T00:00:00+01:00").getTime();
-
         const dayLabel = document.getElementById('day-label');
         const countdownEl = document.getElementById('countdown');
+        const startBtn = document.getElementById('start-btn');
+
+        const DURATION_MS = 72 * 60 * 60 * 1000; // 72 години
+
+        // Запуск по кліку на невидиму кнопку
+        startBtn.addEventListener('click', () => {
+            // Перезаписуємо час старту тільки якщо користувач точно клікнув
+            localStorage.setItem('countdown_start', Date.now());
+            // Додаємо візуальний фідбек (кнопка кліпне зеленим)
+            startBtn.style.background = '#00ff00';
+            setTimeout(() => { startBtn.style.background = '#222'; }, 500);
+            updateTimer();
+        });
 
         function updateTimer() {
-            const now = new Date().getTime();
+            const startMsStr = localStorage.getItem('countdown_start');
             
-            // Рахуємо який зараз день (1 день = 86400000 мілісекунд)
-            const elapsedMs = now - startDate;
-            let dayNumber = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 1;
-            
-            if (dayNumber < 1) dayNumber = 1;
+            // Якщо ще не запускали, показуємо початковий стан
+            if (!startMsStr) {
+                dayLabel.innerText = "DAY 1";
+                countdownEl.innerText = "72:00:00";
+                return;
+            }
 
+            const startMs = parseInt(startMsStr, 10);
+            const now = Date.now();
+            const elapsedMs = now - startMs;
+            
+            // Рахуємо який зараз день (1 день = 24 години)
+            let dayNumber = Math.floor(elapsedMs / (24 * 60 * 60 * 1000)) + 1;
+            // Обмежуємо максимум 3 днями (навіть якщо час вийде)
+            if (dayNumber > 3) dayNumber = 3;
+            
             dayLabel.innerText = `DAY ${dayNumber}`;
 
             // Рахуємо зворотній відлік
+            const targetDate = startMs + DURATION_MS;
             const distance = targetDate - now;
 
-            if (distance < 0) {
+            if (distance <= 0) {
                 countdownEl.innerText = "00:00:00";
                 return;
             }
 
-            // Рахуємо загальну кількість годин (може бути більше 24)
+            // Рахуємо загальну кількість годин (до 72)
             const hours = Math.floor(distance / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
