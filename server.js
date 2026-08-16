@@ -208,16 +208,7 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
-// TEMPORARY CLEAR DB
-app.get('/api/admin/temp-clear', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM donations');
-    statusCache.lastUpdate = 0; // reset cache
-    res.send('All donations cleared successfully');
-  } catch(e) {
-    res.status(500).send(e.message);
-  }
-});
+
 
 // Profanity filter utility
 const badWordsRegex = new RegExp('(ху[йияев]|ху[ёе]в|хуйн|хуйло|хуесос|хуяр|хуяч|ху[еи]та|пизд|еба[тлн]|ёба[нт]|ебану|ебись|еблан|еб[уо]|выеб|доеб|доёб|заеб|наеб|объеб|поеб|проеб|разъеб|отъеб|уеб|уёб|бля|сук[аи]|суч|мудак|мудил|мудозвон|мудач|долбо|долба|дебил|идиот|кретин|тупиц|тупорыл|тупоголов|имбецил|олигофрен|дегенерат|чмо|чмырь|лох|лузер|неудачни|днищ|позорищ|позорни|жалк|ничтож|мраз|мерзав|мерзот|мерзк|твар|скот|выродок|выродки|ублюд|недоносок|недоумок|помойк|шалав|шлюх|проститут|нахуй|отвали|в\\\\s*жопу|fuck|shit|bullshit|horseshit|ass|arsehole|dumbass|jackass|asshat|asswipe|bastard|bitch|biatch|dick|douche|cock|piss|pussy|cunt|twat|wanker|wank|jerkoff|jackoff|blowjob|handjob|bullcrap|crap|damn|убей|сдохни|умри|повесь|перережь|режь|застрелись|kys|kill\\\\s*yourself|go\\\\s*die|die|drop\\\\s*dead|neck\\\\s*yourself|hang\\\\s*yourself|cancer|free\\\\s*(nitro|robux|vbucks|followers|viewers|subscribers|money)|f4f|v4v|s4s|l4l|click\\\\s*my\\\\s*link|click\\\\s*the\\\\s*link|check\\\\s*my\\\\s*bio|check\\\\s*my\\\\s*profile|dm\\\\s*me|message\\\\s*me|contact\\\\s*me|telegram\\\\s*me|whatsapp\\\\s*me|join\\\\s*my\\\\s*discord|join\\\\s*discord|giveaway|prize|crypto|bitcoin|double\\\\s*your\\\\s*money|make\\\\s*money|investment|f[\\\\s\\\\.\\\\-\\\\_\\\\*\\\\@0-4]*u[\\\\s\\\\.\\\\-\\\\_\\\\*\\\\@0-4]*c[\\\\s\\\\.\\\\-\\\\_\\\\*\\\\@0-4]*k|s[h\\\\!\\\\*\\\\@0-4]*t|a[\\\\$\\\\@]+|d[1\\\\!i]ck|c[0\\\\*o]ck|b[\\\\!1i]tch|k[\\\\.\\\\-\\\\s\\\\_]*y[\\\\.\\\\-\\\\s\\\\_]*s|п[\\\\-\\\\s\\\\!1i]*и[\\\\-\\\\s\\\\!1i]*д[\\\\-\\\\s\\\\!1i]*о[\\\\-\\\\s\\\\!1i]*р|д[0oо]лб[0oо][её]б|у[\\\\-\\\\s]*е[\\\\-\\\\s]*б[\\\\-\\\\s]*о[\\\\-\\\\s]*к|м[\\\\-\\\\s]*у[\\\\-\\\\s]*д[\\\\-\\\\s]*а[\\\\-\\\\s]*к|ч[\\\\-\\\\s]*м[\\\\-\\\\s]*о|л[\\\\-\\\\s]*о[\\\\-\\\\s]*х|с[\\\\-\\\\s]*у[\\\\-\\\\s]*к[\\\\-\\\\s]*а|п[\\\\-\\\\s\\\\*\\\\!u3]*и[\\\\-\\\\s\\\\*\\\\!u3]*з[\\\\-\\\\s\\\\*\\\\!u3]*д[\\\\-\\\\s\\\\*\\\\!u3]*[аец]|б[\\\\-\\\\s]*л[\\\\-\\\\s]*я|х[\\\\-\\\\s\\\\*\\\\@y]*у[\\\\-\\\\s\\\\*\\\\@y]*[йяе])', 'gi');
