@@ -499,35 +499,16 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
   }
 });
 
-// --- WEBSOCKETS (with connection limiting) ---
-
-const socketConnections = new Map(); // ip -> count
-const MAX_SOCKETS_PER_IP = 5;
+// --- WEBSOCKETS ---
 
 io.on('connection', (socket) => {
-  const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  const currentCount = socketConnections.get(ip) || 0;
-  
-  if (currentCount >= MAX_SOCKETS_PER_IP) {
-    console.log(`WebSocket limit exceeded for IP: ${ip}`);
-    socket.disconnect(true);
-    return;
-  }
-  
-  socketConnections.set(ip, currentCount + 1);
-  console.log(`Client connected: ${socket.id} (IP: ${ip}, total: ${currentCount + 1})`);
+  console.log(`Client connected: ${socket.id}`);
   
   socket.on('join_admin', () => {
     socket.join('admin');
   });
 
   socket.on('disconnect', () => {
-    const count = socketConnections.get(ip) || 1;
-    if (count <= 1) {
-      socketConnections.delete(ip);
-    } else {
-      socketConnections.set(ip, count - 1);
-    }
     console.log(`Client disconnected: ${socket.id}`);
   });
 });
