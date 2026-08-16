@@ -520,9 +520,9 @@ app.get('/api/countdown', async (req, res) => {
   try {
     const result = await pool.query("SELECT item_value FROM album_settings WHERE item_key = 'countdown_start'");
     if (result.rows.length > 0) {
-      res.json({ startTime: parseInt(result.rows[0].item_value, 10) });
+      res.json({ startTime: parseInt(result.rows[0].item_value, 10), serverNow: Date.now() });
     } else {
-      res.json({ startTime: null });
+      res.json({ startTime: null, serverNow: Date.now() });
     }
   } catch (error) {
     res.status(500).json({ error: 'Database error' });
