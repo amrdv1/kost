@@ -411,7 +411,6 @@
                     style="margin-bottom: 1rem; background: var(--btn-bg); color: var(--text-main); font-size: 0.8rem; padding: 0.8rem;">
                     ⬅ ПОВЕРНУТИСЯ ДО ФОРМИ
                 </button>
-                <div id="express-checkout-element" style="margin-bottom: 1.5rem;"></div>
                 <div id="payment-element"></div>
             </div>
 
@@ -923,19 +922,17 @@
                 paymentContainer.style.display = 'block';
 
                 // --- РЕАЛЬНИЙ STRIPE КОД ---
-                elements = stripe.elements({ clientSecret });
-                
-                // Express Checkout (Apple Pay / Google Pay)
-                const expressCheckoutElement = elements.create('expressCheckout', {
-                    wallets: {
-                        applePay: 'auto',
-                        googlePay: 'auto',
-                        link: 'never' // Disable Link to prioritize Apple/Google Pay
+                const elementsOptions = {
+                    clientSecret,
+                    appearance: {
+                        theme: 'stripe'
                     }
+                };
+                elements = stripe.elements(elementsOptions);
+                
+                const paymentElement = elements.create('payment', { 
+                    layout: 'tabs'
                 });
-                expressCheckoutElement.mount('#express-checkout-element');
-
-                const paymentElement = elements.create('payment', { layout: 'accordion' });
                 paymentElement.mount('#payment-element');
 
                 const amountStr = amountInput.value || '';
