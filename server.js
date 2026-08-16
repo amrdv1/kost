@@ -515,6 +515,40 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
   }
 });
 
+// Public API: Get countdown start time
+app.get('/api/countdown', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT item_value FROM album_settings WHERE item_key = 'countdown_start'");
+    if (result.rows.length > 0) {
+      res.json({ startTime: parseInt(result.rows[0].item_value, 10) });
+    } else {
+      res.json({ startTime: null });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Admin API: Set countdown start time (or clear if not provided)
+app.post('/api/countdown/start', express.json(), async (req, res) => {
+  try {
+    const { startTime } = req.body;
+    if (startTime) {
+      await pool.query(
+        `INSERT INTO album_settings (item_key, item_value) VALUES ('countdown_start', $1)
+         ON CONFLICT (item_key) DO UPDATE SET item_value = EXCLUDED.item_value`,
+        [startTime.toString()]
+      );
+    } else {
+      await pool.query("DELETE FROM album_settings WHERE item_key = 'countdown_start'");
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // --- WEBSOCKETS ---
 
 io.on('connection', (socket) => {

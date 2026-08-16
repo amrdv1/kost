@@ -52,36 +52,56 @@
         const resetBtn = document.getElementById('reset-btn');
 
         const DURATION_MS = 72 * 60 * 60 * 1000; // 72 години
+        let globalStartMs = null; // Зберігаємо час старту
 
         // Запуск по кліку на невидиму кнопку (зліва)
-        startBtn.addEventListener('click', () => {
-            localStorage.setItem('countdown_start', Date.now());
+        startBtn.addEventListener('click', async () => {
+            const now = Date.now();
+            globalStartMs = now;
+            await fetch('/api/countdown/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ startTime: now })
+            });
             startBtn.style.background = '#00ff00';
             setTimeout(() => { startBtn.style.background = '#222'; }, 500);
-            updateTimer();
+            renderTimer();
         });
 
         // Скидання по кліку на невидиму кнопку (справа)
-        resetBtn.addEventListener('click', () => {
+        resetBtn.addEventListener('click', async () => {
             if (confirm("Точно скинути таймер на 72:00:00?")) {
-                localStorage.removeItem('countdown_start');
+                globalStartMs = null;
+                await fetch('/api/countdown/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startTime: null })
+                });
                 resetBtn.style.background = '#ff0000';
                 setTimeout(() => { resetBtn.style.background = '#111'; }, 500);
-                updateTimer();
+                renderTimer();
             }
         });
 
-        function updateTimer() {
-            const startMsStr = localStorage.getItem('countdown_start');
-            
+        async function fetchStartTime() {
+            try {
+                const res = await fetch('/api/countdown');
+                const data = await res.json();
+                globalStartMs = data.startTime;
+            } catch (err) {
+                console.error('Помилка синхронізації часу', err);
+            }
+        }
+
+        function renderTimer() {
             // Якщо ще не запускали, показуємо початковий стан
-            if (!startMsStr) {
+            if (!globalStartMs) {
                 dayLabel.innerText = "DAY 1";
                 countdownEl.innerText = "72:00:00";
                 return;
             }
 
-            const startMs = parseInt(startMsStr, 10);
+            const startMs = globalStartMs;
             const now = Date.now();
             const elapsedMs = now - startMs;
             
@@ -113,8 +133,14 @@
             countdownEl.innerText = `${h}:${m}:${s}`;
         }
 
-        setInterval(updateTimer, 1000);
-        updateTimer();
+        setInterval(() => {
+            renderTimer();
+            // Синхронізуємо з сервером кожні 10 секунд
+            if (new Date().getSeconds() % 10 === 0) fetchStartTime();
+        }, 1000);
+        
+        // Початкова ініціалізація
+        fetchStartTime().then(renderTimer);
     </script>
 </body>
 </html>
