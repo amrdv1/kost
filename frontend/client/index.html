@@ -363,15 +363,15 @@
                     <div class="file-upload-wrapper" style="width: calc(50% - 5px); flex: none; display: flex;">
                         <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*">
                         <label for="audio" class="pill-element file-upload-label" id="file-label-text"
-                            style="display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1; width: 100%; box-sizing: border-box;">
-                            <svg viewBox="0 0 24 24">
+                            style="display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1; width: 100%; box-sizing: border-box; overflow: hidden;">
+                            <svg viewBox="0 0 24 24" style="flex-shrink: 0;">
                                 <path
                                     d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                             </svg>
                             <div
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
-                                <span style="white-space: nowrap;">АУДІО</span>
-                                <span style="font-size: 0.9em; opacity: 0.8; white-space: nowrap;">(ДО 20С)</span>
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; overflow: hidden; min-width: 0;">
+                                <span id="file-label-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">АУДІО</span>
+                                <span id="file-label-sub" style="font-size: 0.9em; opacity: 0.8; white-space: nowrap;">(ДО 20С)</span>
                             </div>
                         </label>
                     </div>
@@ -538,22 +538,27 @@
             fileInput.value = '';
             previewContainer.style.display = 'none';
             previewAudio.src = '';
-            fileLabel.querySelector('span').innerText = 'ОБРАТИ АУДІО (ДО 20С)';
+            document.getElementById('file-label-name').innerText = 'АУДІО';
+            document.getElementById('file-label-sub').innerText = '(ДО 20С)';
         });
 
         // UI Файлу
         function handleFileSelection(file) {
+            const nameSpan = document.getElementById('file-label-name');
+            const subSpan = document.getElementById('file-label-sub');
             if (file) {
                 const fileName = file.name;
-                const shortName = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
-                fileLabel.innerText = shortName.toUpperCase();
+                const shortName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
+                nameSpan.innerText = shortName.toUpperCase();
+                subSpan.innerText = '(ДО 20С)';
 
                 // Show preview for selected file
                 const audioUrl = URL.createObjectURL(file);
                 previewAudio.src = audioUrl;
                 previewContainer.style.display = 'flex';
             } else {
-                fileLabel.querySelector('span').innerText = 'ОБРАТИ АУДІО (ДО 20С)';
+                nameSpan.innerText = 'АУДІО';
+                subSpan.innerText = '(ДО 20С)';
                 previewContainer.style.display = 'none';
                 previewAudio.src = '';
             }
