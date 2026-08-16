@@ -437,13 +437,14 @@
                 const resStatus = await fetch(`${API_URL}/status`);
                 const dataStatus = await resStatus.json();
                 const count = dataStatus.count;
+                window.soundCount = count;
 
                 const displayCount = Math.min(count, 50);
                 document.getElementById('progress-text').innerText = `ЗАПОВНЕНО ${displayCount} З 50 ЗВУКІВ`;
                 document.getElementById('progress-fill').style.width = `${(displayCount / 50) * 100}%`;
 
                 if (count >= 50) {
-                    showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! Можливі лише донати без звуку (до 499 грн).');
+                    showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! Доступні лише звичайні донати (без звуку).');
                 }
 
                 // Check for payment error redirect
@@ -498,8 +499,9 @@
         // Dynamic Amount Logic
         function updateAudioState() {
             const amount = parseInt(amountInput.value, 10) || 0;
+            const limitReached = window.soundCount >= 50;
 
-            if (amount < 500) {
+            if (amount < 500 || limitReached) {
                 fileInput.disabled = true;
                 fileLabel.style.opacity = '0.5';
                 fileLabel.style.cursor = 'not-allowed';
@@ -533,7 +535,10 @@
 
         fileUploadWrapper.addEventListener('click', (e) => {
             const amount = parseInt(amountInput.value, 10) || 0;
-            if (amount < 500) {
+            if (window.soundCount >= 50) {
+                e.preventDefault();
+                showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! Доступні лише звичайні донати без звуку.');
+            } else if (amount < 500) {
                 e.preventDefault();
                 showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 UAH!');
             }
@@ -590,6 +595,12 @@
 
         recordBtn.addEventListener('click', async (e) => {
             const amount = parseInt(amountInput.value, 10) || 0;
+            if (window.soundCount >= 50) {
+                e.preventDefault();
+                e.stopPropagation();
+                showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! Запис звуку недоступний.');
+                return;
+            }
             if (amount < 500) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -831,7 +842,6 @@
             const amount = parseInt(amountInput.value, 10);
 
             if (isNaN(amount) || amount < 50) return showError('МІНІМАЛЬНА СУМА 50 UAH');
-            if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 UAH НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
             if (name.length > 50) return showError('ІМ\'Я ЗАНАДТО ДОВГЕ (МАКС 50)');
             if (message && message.length > 250) return showError('ПОВІДОМЛЕННЯ ЗАНАДТО ДОВГЕ (МАКС 250)');
@@ -844,8 +854,14 @@
             // Limit check on frontend
             const resStatus = await fetch(`${API_URL}/status`);
             const dataStatus = await resStatus.json();
-            if (amount >= 500 && dataStatus.count >= 50) {
-                return showError('ЛІМІТ ЗВУКІВ (50/50) ВИЧЕРПАНО! ДОСТУПНІ ЛИШЕ ЗВИЧАЙНІ ДОНАТИ.');
+            window.soundCount = dataStatus.count;
+            const limitReached = window.soundCount >= 50;
+
+            if (amount >= 500 && !limitReached && !file) {
+                return showError('ДЛЯ ДОНАТУ ВІД 500 UAH НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
+            }
+            if (limitReached && file) {
+                return showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! ЗВУК ПРИКРІПИТИ НЕМОЖЛИВО.');
             }
 
             submitBtn.disabled = true;

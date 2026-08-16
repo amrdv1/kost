@@ -267,21 +267,21 @@ app.post('/api/upload', ...uploadMiddleware, async (req, res) => {
 
     if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
 
-    if (donationAmount >= 500 && !file) {
-      return res.status(400).json({ error: 'Для донату від 500 грн необхідно прикріпити звук' });
-    }
-
     // 50 sound limit check (cached)
+    const now = Date.now();
+    if (now - statusCache.lastUpdate > STATUS_CACHE_TTL) {
+      const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED' AND amount >= 500`);
+      statusCache.count = parseInt(countRes.rows[0].count, 10);
+      statusCache.lastUpdate = now;
+    }
+    const limitReached = statusCache.count >= 50;
+
     if (donationAmount >= 500) {
-      // Use cache to avoid hammering DB
-      const now = Date.now();
-      if (now - statusCache.lastUpdate > STATUS_CACHE_TTL) {
-        const countRes = await pool.query(`SELECT COUNT(*) FROM donations WHERE audio_status = 'APPROVED' AND amount >= 500`);
-        statusCache.count = parseInt(countRes.rows[0].count, 10);
-        statusCache.lastUpdate = now;
+      if (!limitReached && !file) {
+        return res.status(400).json({ error: 'Для донату від 500 грн необхідно прикріпити звук' });
       }
-      if (statusCache.count >= 50) {
-        return res.status(400).json({ error: 'ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! (50/50)' });
+      if (limitReached && file) {
+        return res.status(400).json({ error: 'ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! (50/50). Доступні лише звичайні донати без звуку.' });
       }
     }
 
