@@ -35,7 +35,7 @@ pool.on('error', (err) => {
 });
 
 // GLOBAL TEST MODE (Bypasses Stripe for all donations)
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 // Auto-create tables if not exist
 pool.query(`
