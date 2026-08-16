@@ -557,7 +557,7 @@
                 osc.start(now);
                 osc.stop(now + 1);
             } else if (type === 'sound') {
-                // Epic deep impact
+                // Deep impact for sound donations
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(150, now);
                 osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
@@ -568,6 +568,28 @@
                 
                 osc.start(now);
                 osc.stop(now + 1.5);
+            } else if (type === 'epic') {
+                // Epic synth sweep for large normal donations
+                const osc2 = audioCtx.createOscillator();
+                osc.type = 'sawtooth';
+                osc2.type = 'square';
+                
+                osc2.connect(gain);
+                
+                osc.frequency.setValueAtTime(110, now); // A2
+                osc.frequency.exponentialRampToValueAtTime(440, now + 1); // A4
+                
+                osc2.frequency.setValueAtTime(165, now); // E3
+                osc2.frequency.exponentialRampToValueAtTime(660, now + 1); // E5
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(masterVolume * 0.9, now + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+                
+                osc.start(now);
+                osc2.start(now);
+                osc.stop(now + 2);
+                osc2.stop(now + 2);
             }
         }
 
@@ -589,8 +611,16 @@
             // The visual popup is now gone, but the sound/history still works
             // We just don't create or append the box anymore
 
+            // Determine alert type
+            let alertType = 'normal';
+            if (isSoundDonation) {
+                alertType = 'sound';
+            } else if (data.amount >= 500) {
+                alertType = 'epic';
+            }
+
             // Play specific synth sound
-            playSynthAlert(isSoundDonation ? 'sound' : 'normal');
+            playSynthAlert(alertType);
 
             // For normal (non-sound) donations, read out the message via TTS
             if (!isSoundDonation && !isMuted) {

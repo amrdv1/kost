@@ -858,9 +858,6 @@
             window.soundCount = dataStatus.count;
             const limitReached = window.soundCount >= 50;
 
-            if (amount >= 500 && !limitReached && !file) {
-                return showError('ДЛЯ ДОНАТУ ВІД 500 UAH НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
-            }
             if (limitReached && file) {
                 return showError('ЛІМІТ ЗВУКІВ ВИЧЕРПАНО! ЗВУК ПРИКРІПИТИ НЕМОЖЛИВО.');
             }
