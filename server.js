@@ -358,7 +358,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       amount: Math.round(donation.amount * 100), // dynamic UAH amount
       currency: 'uah',
       metadata: { donation_id: donation_id },
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card'],
     });
 
     res.json({ clientSecret: paymentIntent.client_secret });
