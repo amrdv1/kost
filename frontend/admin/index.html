@@ -564,7 +564,7 @@
             
             isAlerting = true;
             const data = alertQueue.shift();
-            const isSoundDonation = data.amount >= 500;
+            const isSoundDonation = data.amount >= 500 && data.audio_type;
             
             // Add to the admin grid (history) instantly
             addSoundToGrid(data, true);
