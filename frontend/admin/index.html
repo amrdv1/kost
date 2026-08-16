@@ -549,54 +549,39 @@
             // Play specific synth sound
             playSynthAlert(isSoundDonation ? 'sound' : 'normal');
 
-            // If it's a sound donation, play the recorded audio after synth finishes (~1.5s)
-            if (isSoundDonation && data.audio_base64) {
+            // For normal (non-sound) donations, read out the message via TTS
+            if (!isSoundDonation && !isMuted) {
                 setTimeout(() => {
-                    const audioSource = `data:${data.audio_type};base64,${data.audio_base64}`;
-                    const customAudio = new Audio(audioSource);
-                    customAudio.volume = masterVolume;
-                    customAudio.play().catch(e => console.error("Audio play failed:", e));
-                }, 1500);
-            } else {
-                // TEXT TO SPEECH for normal donations
-                if (!isMuted) {
-                    setTimeout(() => {
-                        const msg = data.message ? data.message : 'Дякую за донат!';
-                        
-                        // Simple language detection
-                        let lang = 'uk-UA';
-                        if (/[a-z]/i.test(msg) && !/[а-я]/i.test(msg)) {
-                            lang = 'en-US';
-                        } else if (/[ыэъё]/i.test(msg)) {
-                            lang = 'ru-RU';
-                        } else if (/[іїєґ]/i.test(msg)) {
-                            lang = 'uk-UA';
-                        }
-                        
-                        // Name is always spoken in Ukrainian (or the detected lang if preferred)
-                        const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
-                        utterance.lang = lang;
-                        
-                        // Try to explicitly find the best voice model
-                        const voices = window.speechSynthesis.getVoices();
-                        // 1. Try exact match (e.g. 'uk-UA')
-                        let voice = voices.find(v => v.lang === lang);
-                        // 2. Try partial match (e.g. 'uk')
-                        if (!voice) voice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
-                        // 3. Fallbacks if Ukrainian is missing but requested (try Google's specific voices)
-                        if (!voice && lang === 'uk-UA') {
-                            voice = voices.find(v => v.name.toLowerCase().includes('ukrainian') || v.name.toLowerCase().includes('українська'));
-                        }
-                        
-                        if (voice) {
-                            utterance.voice = voice;
-                        }
+                    const msg = data.message ? data.message : 'Дякую за донат!';
+                    
+                    // Simple language detection
+                    let lang = 'uk-UA';
+                    if (/[a-z]/i.test(msg) && !/[а-я]/i.test(msg)) {
+                        lang = 'en-US';
+                    } else if (/[ыэъё]/i.test(msg)) {
+                        lang = 'ru-RU';
+                    } else if (/[іїєґ]/i.test(msg)) {
+                        lang = 'uk-UA';
+                    }
+                    
+                    const utterance = new SpeechSynthesisUtterance(`${data.customer_name || data.name} каже: ${msg}`);
+                    utterance.lang = lang;
+                    
+                    const voices = window.speechSynthesis.getVoices();
+                    let voice = voices.find(v => v.lang === lang);
+                    if (!voice) voice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+                    if (!voice && lang === 'uk-UA') {
+                        voice = voices.find(v => v.name.toLowerCase().includes('ukrainian') || v.name.toLowerCase().includes('українська'));
+                    }
+                    
+                    if (voice) {
+                        utterance.voice = voice;
+                    }
 
-                        utterance.rate = 1.0;
-                        utterance.pitch = 1.0;
-                        window.speechSynthesis.speak(utterance);
-                    }, 1000);
-                }
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }, 1000);
             }
 
             // Keep alerting state active for 20 seconds, then process next in queue
@@ -933,7 +918,7 @@
             card.innerHTML = `
                 <div class="donation-header">
                     <span class="donation-name">${sound.customer_name}</span>
-                    <span class="donation-amount">${sound.amount || '?'} ₴</span>
+                    <span class="donation-amount">${sound.amount || '?'} UAH</span>
                     <span class="donation-time">${timeString}</span>
                 </div>
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}

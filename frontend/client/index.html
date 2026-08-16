@@ -510,7 +510,7 @@
             }
 
             if (!stripeMode) {
-                submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} ₴` : 'ПРОДОВЖИТИ';
+                submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} UAH` : 'ПРОДОВЖИТИ';
             }
         }
 
@@ -527,7 +527,7 @@
             const amount = parseInt(amountInput.value, 10) || 0;
             if (amount < 500) {
                 e.preventDefault();
-                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 ₴!');
+                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 UAH!');
             }
         });
 
@@ -580,7 +580,7 @@
             if (amount < 500) {
                 e.preventDefault();
                 e.stopPropagation();
-                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 ₴!');
+                showError('ЗВУК ДОСТУПНИЙ ЛИШЕ ПРИ ДОНАТІ ВІД 500 UAH!');
                 return;
             }
 
@@ -681,7 +681,7 @@
 
             // Відновлюємо кнопку "Продовжити"
             const amount = parseInt(amountInput.value, 10) || 0;
-            submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} ₴` : 'ПРОДОВЖИТИ';
+            submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} UAH` : 'ПРОДОВЖИТИ';
 
             // Знищуємо елемент Stripe щоб можна було створити новий, якщо користувач змінить суму і натисне знову
             if (elements) {
@@ -783,7 +783,7 @@
                 if (error) {
                     showError(error.message);
                     submitBtn.disabled = false;
-                    submitBtn.innerText = 'СПЛАТИТИ 5 ₴';
+                    submitBtn.innerText = 'СПЛАТИТИ 5 UAH';
                 }
                 return;
             }
@@ -794,8 +794,8 @@
             const message = messageInput.value;
             const amount = parseInt(amountInput.value, 10);
 
-            if (isNaN(amount) || amount < 50) return showError('МІНІМАЛЬНА СУМА 50 ₴');
-            if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 ₴ НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
+            if (isNaN(amount) || amount < 50) return showError('МІНІМАЛЬНА СУМА 50 UAH');
+            if (amount >= 500 && !file) return showError('ДЛЯ ДОНАТУ ВІД 500 UAH НЕОБХІДНО ПРИКРІПИТИ ЗВУК!');
             if (!name) return showError('ВВЕДІТЬ ВАШЕ ІМ\'Я!');
             if (name.length > 50) return showError('ІМ\'Я ЗАНАДТО ДОВГЕ (МАКС 50)');
             if (message && message.length > 250) return showError('ПОВІДОМЛЕННЯ ЗАНАДТО ДОВГЕ (МАКС 250)');
@@ -876,7 +876,7 @@
                 paymentElement.mount('#payment-element');
 
                 const amountStr = amountInput.value || '';
-                submitBtn.innerText = amountStr ? `СПЛАТИТИ ${amountStr} ₴` : 'ПРОДОВЖИТИ';
+                submitBtn.innerText = amountStr ? `СПЛАТИТИ ${amountStr} UAH` : 'ПРОДОВЖИТИ';
                 submitBtn.disabled = false;
                 stripeMode = true;
 

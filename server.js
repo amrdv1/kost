@@ -258,31 +258,6 @@ app.post('/api/admin/logout', adminAuth, (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
   activeSessions.delete(token);
   res.json({ success: true });
-});
-
-// Secret endpoint to generate fake donations for testing
-app.get('/api/fake-donate', async (req, res) => {
-  try {
-    const isSound = req.query.type === 'sound' || req.query.amount >= 500;
-    const amount = req.query.amount ? parseInt(req.query.amount) : (isSound ? 500 : 50);
-    const name = req.query.name || 'ТЕСТОВИЙ ДОНАТ';
-    const msg = req.query.msg || 'Це фейковий донат для перевірки відображення на стрімі та в адмінці!';
-    const audioBase64 = isSound ? 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=' : ''; // tiny valid wav stub
-    const audioType = isSound ? 'audio/wav' : '';
-    
-    const result = await pool.query(
-      `INSERT INTO donations (stripe_payment_id, customer_name, message, amount, audio_base64, audio_type, payment_status, audio_status) 
-       VALUES ($1, $2, $3, $4, $5, $6, 'PAID', 'APPROVED') RETURNING id, customer_name, message, amount, audio_base64, audio_type, created_at`,
-      ['fake_' + Date.now() + Math.random(), name, msg, amount, audioBase64, audioType]
-    );
-
-    io.emit('play_sound', result.rows[0]);
-    res.json({ success: true, message: 'Fake donation created and emitted!', donation: result.rows[0] });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Admin API: Get pending donations
 app.get('/api/admin/pending', adminAuth, async (req, res) => {
