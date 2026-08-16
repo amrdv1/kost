@@ -597,7 +597,7 @@
         };
 
         // When a new payment is made, it auto-approves and emits this:
-        socket.on('play_sound', (sound) => {
+        socket.on('new_donation', (sound) => {
             console.log("New donation received!", sound);
             alertQueue.push(sound);
             processQueue();
@@ -878,7 +878,7 @@
 
         function playSound(sound) {
             try {
-                const audio = new Audio(`data:${sound.audio_type};base64,${sound.audio_base64}`);
+                const audio = new Audio(`/api/audio/${sound.id}`);
                 audio.play().catch(e => console.log('Autoplay prevented by browser:', e));
             } catch (e) {
                 console.error("Error playing sound", e);
@@ -886,8 +886,7 @@
         }
 
         function addSoundToGrid(sound, isNew = false) {
-            const hasAudio = sound.audio_base64 && sound.audio_base64.length > 50 && sound.audio_base64 !== 'null';
-            const isSoundDonation = sound.amount >= 500 && hasAudio;
+            const isSoundDonation = sound.amount >= 500 && sound.audio_type;
             const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
             const grid = document.getElementById(targetGridId);
 
@@ -899,11 +898,11 @@
             card.className = 'donation-card';
             if (isNew) {
                 card.classList.add('new-sound');
-                // Remove animation after 10 seconds
                 setTimeout(() => card.classList.remove('new-sound'), 10000);
             }
 
-            const audioSource = `data:${sound.audio_type};base64,${sound.audio_base64}`;
+            // Use the new /api/audio/:id endpoint instead of inline base64
+            const audioSource = `/api/audio/${sound.id}`;
 
             // Format date
             let timeString = 'Щойно';
@@ -924,7 +923,7 @@
                 ${sound.message ? `<div class="donation-message">${sound.message}</div>` : ''}
                 ${isSoundDonation ? `<audio class="donation-audio" controls src="${audioSource}"></audio>` : ''}
                 <div class="donation-actions">
-                    ${isSoundDonation ? `<button onclick="downloadAsWav('${sound.audio_base64}', 'sound_${sound.customer_name}.wav')" class="btn-action">ЗАВАНТАЖИТИ ЯК .WAV</button>` : ''}
+                    ${isSoundDonation ? `<a href="${audioSource}" download="sound_${sound.customer_name}.wav" class="btn-action">ЗАВАНТАЖИТИ</a>` : ''}
                 </div>
             `;
 
