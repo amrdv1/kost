@@ -825,6 +825,7 @@
             };
 
             btn.onclick = () => {
+                sessionStorage.removeItem('admin_token');
                 window.location.reload();
             };
 
