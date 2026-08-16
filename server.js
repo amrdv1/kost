@@ -91,10 +91,10 @@ const generalLimiter = rateLimit({
   message: { error: 'Забагато запитів. Зачекайте хвилину.' }
 });
 
-// Upload rate limit: 5 uploads per minute per IP (anti-spam)
+// Upload rate limit: 3 uploads per minute per IP (anti-spam)
 const uploadLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 3,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Забагато спроб. Зачекайте хвилину.' }
@@ -102,6 +102,32 @@ const uploadLimiter = rateLimit({
 
 // Apply general limiter to all API routes
 app.use('/api/', generalLimiter);
+
+// --- ANTI-SPAM ---
+
+// Track recent submissions to detect duplicates
+const recentSubmissions = new Map(); // key: ip -> { lastSubmitTime, lastHash }
+
+// Clean up old entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of recentSubmissions) {
+    if (now - data.lastSubmitTime > 5 * 60 * 1000) {
+      recentSubmissions.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// Simple hash for duplicate detection
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
+}
 
 // --- CACHING ---
 
@@ -205,6 +231,33 @@ app.post('/api/upload', uploadLimiter, upload.single('audio'), async (req, res) 
     
     if (message && message.length > 250) return res.status(400).json({ error: 'Повідомлення занадто довге (макс 250 символів)' });
     if (message && urlRegex.test(message)) return res.status(400).json({ error: 'Посилання заборонені!' });
+
+    // Honeypot: if hidden field is filled, it's a bot
+    if (req.body.website) {
+      console.log('Honeypot triggered from IP:', req.ip);
+      return res.status(400).json({ error: 'Invalid request' });
+    }
+
+    // Time-based anti-bot: check submission timestamp
+    const submitTime = parseInt(req.body._t, 10) || 0;
+    const timeDiff = Date.now() - submitTime;
+    if (submitTime > 0 && timeDiff < 3000) {
+      // Form filled in less than 3 seconds = likely bot
+      console.log('Speed bot detected from IP:', req.ip, 'filled in', timeDiff, 'ms');
+      return res.status(400).json({ error: 'Занадто швидко. Спробуйте ще раз.' });
+    }
+
+    // Duplicate detection: same name+message from same IP within 2 minutes
+    const ip = req.ip || req.connection.remoteAddress;
+    const contentHash = simpleHash(name + (message || '') + amount);
+    const prevSubmission = recentSubmissions.get(ip);
+    if (prevSubmission) {
+      const timeSinceLast = Date.now() - prevSubmission.lastSubmitTime;
+      if (prevSubmission.lastHash === contentHash && timeSinceLast < 120000) {
+        return res.status(400).json({ error: 'Цей донат вже було надіслано. Зачекайте 2 хвилини.' });
+      }
+    }
+    recentSubmissions.set(ip, { lastSubmitTime: Date.now(), lastHash: contentHash });
 
     if (isNaN(donationAmount) || donationAmount < 50) return res.status(400).json({ error: 'Мінімальна сума 50 грн' });
 
@@ -440,25 +493,44 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
   }
 });
 
-// --- WEBSOCKETS ---
+// --- WEBSOCKETS (with connection limiting) ---
+
+const socketConnections = new Map(); // ip -> count
+const MAX_SOCKETS_PER_IP = 5;
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  const currentCount = socketConnections.get(ip) || 0;
+  
+  if (currentCount >= MAX_SOCKETS_PER_IP) {
+    console.log(`WebSocket limit exceeded for IP: ${ip}`);
+    socket.disconnect(true);
+    return;
+  }
+  
+  socketConnections.set(ip, currentCount + 1);
+  console.log(`Client connected: ${socket.id} (IP: ${ip}, total: ${currentCount + 1})`);
   
   socket.on('join_admin', () => {
     socket.join('admin');
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    const count = socketConnections.get(ip) || 1;
+    if (count <= 1) {
+      socketConnections.delete(ip);
+    } else {
+      socketConnections.set(ip, count - 1);
+    }
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
 // --- STATIC FILES (with cache headers) ---
 
 app.use(express.static(path.join(__dirname, 'frontend'), {
-  maxAge: '1h',           // Cache static files for 1 hour
-  etag: true,             // Enable ETag for conditional requests
+  maxAge: '1h',
+  etag: true,
   lastModified: true
 }));
 
@@ -487,8 +559,20 @@ function gracefulShutdown(signal) {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
+// --- CRASH PREVENTION ---
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION — Server did NOT crash:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION — Server did NOT crash:', reason);
+});
+
 // --- START SERVER ---
 
 server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
+  console.log(`TEST_MODE: ${TEST_MODE}`);
+  console.log(`Pool max connections: ${pool.options?.max || 20}`);
 });

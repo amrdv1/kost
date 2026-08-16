@@ -354,6 +354,8 @@
 
             <!-- Звичайні поля -->
             <div id="data-fields" style="display: flex; flex-direction: column; width: 100%;">
+                <!-- Honeypot: invisible to humans, bots will fill it -->
+                <input type="text" name="website" id="hp-field" autocomplete="off" tabindex="-1" style="position: absolute; left: -9999px; opacity: 0; height: 0; width: 0;">
                 <input type="text" id="name" class="pill-element" placeholder="ВАШЕ ІМ'Я" maxlength="50" required
                     autocomplete="off" style="margin-bottom: 1rem;">
                 <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
@@ -466,6 +468,9 @@
             }
         }
         init();
+
+        // Anti-bot: record when user started interacting with the form
+        window._formLoadTime = Date.now().toString();
 
         // === DOM ЕЛЕМЕНТИ ===
         const form = document.getElementById('donation-form');
@@ -863,6 +868,8 @@
                 formData.append('name', name);
                 formData.append('message', message);
                 formData.append('amount', amount);
+                formData.append('website', document.getElementById('hp-field').value); // honeypot
+                formData.append('_t', window._formLoadTime || '0'); // anti-bot timestamp
 
                 const uploadRes = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
