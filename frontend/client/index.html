@@ -883,7 +883,7 @@
                 const uploadData = await uploadRes.json();
                 
                 if (uploadData.bypassed) {
-                    window.location.href = '/client/success.html';
+                    window.location.href = '/client/success.html?redirect_status=succeeded';
                     return;
                 }
 
