@@ -258,6 +258,7 @@ app.post('/api/admin/logout', adminAuth, (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
   activeSessions.delete(token);
   res.json({ success: true });
+});
 
 // Admin API: Get pending donations
 app.get('/api/admin/pending', adminAuth, async (req, res) => {
