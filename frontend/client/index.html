@@ -382,7 +382,7 @@
                     </div>
                     <button type="button" id="record-btn" class="pill-element"
                         style="width: calc(50% - 5px); flex: none; background: #7d7d7d; color: white; display: flex; align-items: center; justify-content: center; gap: 12px; transition: box-shadow 0.1s, background-color 0.2s; height: 100%; box-sizing: border-box;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                             <path
                                 d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
                         </svg>
@@ -504,18 +504,26 @@
 
             if (amount < 500 || limitReached) {
                 fileInput.disabled = true;
-                fileLabel.style.opacity = '0.5';
+                fileLabel.style.background = '#e6e6e6';
+                fileLabel.style.color = '#999999';
+                fileLabel.style.opacity = '1';
                 fileLabel.style.cursor = 'not-allowed';
 
                 recordBtn.disabled = true;
-                recordBtn.style.opacity = '0.5';
+                recordBtn.style.background = '#e6e6e6';
+                recordBtn.style.color = '#999999';
+                recordBtn.style.opacity = '1';
                 recordBtn.style.cursor = 'not-allowed';
             } else {
                 fileInput.disabled = false;
+                fileLabel.style.background = '#000000';
+                fileLabel.style.color = '#ffffff';
                 fileLabel.style.opacity = '1';
                 fileLabel.style.cursor = 'pointer';
 
                 recordBtn.disabled = false;
+                recordBtn.style.background = '#000000';
+                recordBtn.style.color = '#ffffff';
                 recordBtn.style.opacity = '1';
                 recordBtn.style.cursor = 'pointer';
             }
