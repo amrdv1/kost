@@ -24,6 +24,9 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+// GLOBAL TEST MODE (Bypasses Stripe for all donations)
+const TEST_MODE = true;
+
 // Auto-create table if not exists (so it works on Railway instantly)
 pool.query(`
   CREATE TABLE IF NOT EXISTS donations (
@@ -159,6 +162,16 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 
     const filteredName = filterProfanity(name);
     const filteredMessage = filterProfanity(message || '');
+
+    if (TEST_MODE) {
+      const result = await pool.query(
+        `INSERT INTO donations (stripe_payment_id, customer_name, message, amount, audio_base64, audio_type, payment_status, audio_status) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'PAID', 'APPROVED') RETURNING *`,
+        ['test_' + Date.now(), filteredName, filteredMessage, donationAmount, base64Audio, mimeType]
+      );
+      io.emit('play_sound', result.rows[0]);
+      return res.json({ id: result.rows[0].id, bypassed: true });
+    }
 
     const result = await pool.query(
       `INSERT INTO donations (customer_name, message, amount, audio_base64, audio_type) 

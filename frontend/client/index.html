@@ -129,7 +129,8 @@
             margin: 0;
         }
 
-        .file-upload-label svg, #record-btn svg {
+        .file-upload-label svg,
+        #record-btn svg {
             width: 24px;
             height: 24px;
             fill: currentColor;
@@ -235,9 +236,10 @@
             font-family: inherit;
             outline: none;
             transition: all 0.3s;
-            -moz-appearance: textfield; /* Hide spinner in Firefox */
+            -moz-appearance: textfield;
+            /* Hide spinner in Firefox */
         }
-        
+
         /* Hide spinners in WebKit/Blink (Chrome, Safari, Edge) */
         .amount-wrapper input::-webkit-outer-spin-button,
         .amount-wrapper input::-webkit-inner-spin-button {
@@ -287,26 +289,33 @@
             body {
                 padding: 1rem;
             }
+
             h1 {
                 font-size: 1.8rem;
             }
+
             .amount-wrapper input {
                 font-size: 2.5rem;
                 height: 70px;
             }
+
             .amount-wrapper .currency-symbol {
                 font-size: 1rem;
                 right: 1.5rem;
             }
+
             .info-badge {
                 font-size: 0.72rem;
                 white-space: nowrap;
             }
+
             .pill-element {
                 padding: 1rem 1.2rem;
                 font-size: 0.85rem;
             }
-            #record-btn, .file-upload-label {
+
+            #record-btn,
+            .file-upload-label {
                 font-size: 0.75rem;
                 padding: 0.8rem 0.5rem;
             }
@@ -338,7 +347,7 @@
                         <path
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                     </svg>
-                    <span>Мінімум 50 UAH. Звук на стрім — від 500 UAH.</span>
+                    <span>Мінімум 50 UAH. Звук в альбом — від 500 UAH.</span>
                 </div>
             </div>
 
@@ -348,15 +357,18 @@
                     autocomplete="off" style="margin-bottom: 1rem;">
                 <input type="text" id="message" class="pill-element" placeholder="ПОВІДОМЛЕННЯ (НЕОБОВ'ЯЗКОВО)"
                     maxlength="250" autocomplete="off" style="margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; align-items: stretch;">
+                <div
+                    style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 1rem; align-items: stretch;">
                     <div class="file-upload-wrapper" style="width: calc(50% - 5px); flex: none; display: flex;">
                         <input type="file" id="audio" class="file-upload-input" accept=".mp3, .wav, .ogg, audio/*">
-                        <label for="audio" class="pill-element file-upload-label" id="file-label-text" style="display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1; width: 100%; box-sizing: border-box;">
+                        <label for="audio" class="pill-element file-upload-label" id="file-label-text"
+                            style="display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1; width: 100%; box-sizing: border-box;">
                             <svg viewBox="0 0 24 24">
                                 <path
                                     d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                             </svg>
-                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
+                            <div
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
                                 <span style="white-space: nowrap;">АУДІО</span>
                                 <span style="font-size: 0.9em; opacity: 0.8; white-space: nowrap;">(ДО 20С)</span>
                             </div>
@@ -368,7 +380,8 @@
                             <path
                                 d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
                         </svg>
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
+                        <div
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
                             <span>ЗАПИС</span>
                             <span style="font-size: 0.9em; opacity: 0.9;">(ДО 20С)</span>
                         </div>
@@ -389,7 +402,8 @@
 
             <!-- Stripe Контейнер -->
             <div id="payment-container">
-                <button type="button" id="back-to-form-btn" class="pill-element" style="margin-bottom: 1rem; background: var(--btn-bg); color: var(--text-main); font-size: 0.8rem; padding: 0.8rem;">
+                <button type="button" id="back-to-form-btn" class="pill-element"
+                    style="margin-bottom: 1rem; background: var(--btn-bg); color: var(--text-main); font-size: 0.8rem; padding: 0.8rem;">
                     ⬅ ПОВЕРНУТИСЯ ДО ФОРМИ
                 </button>
                 <div id="payment-element"></div>
@@ -664,11 +678,11 @@
             paymentContainer.style.display = 'none';
             document.getElementById('top-section').style.display = 'block';
             dataFields.style.display = 'flex';
-            
+
             // Відновлюємо кнопку "Продовжити"
             const amount = parseInt(amountInput.value, 10) || 0;
             submitBtn.innerText = amount > 0 ? `СПЛАТИТИ ${amount} ₴` : 'ПРОДОВЖИТИ';
-            
+
             // Знищуємо елемент Stripe щоб можна було створити новий, якщо користувач змінить суму і натисне знову
             if (elements) {
                 const pe = elements.getElement('payment');
@@ -831,6 +845,12 @@
                     throw new Error(errData.error || 'Помилка завантаження файлу');
                 }
                 const uploadData = await uploadRes.json();
+                
+                if (uploadData.bypassed) {
+                    window.location.href = '/client/success.html';
+                    return;
+                }
+
                 const donationId = uploadData.id;
 
                 submitBtn.innerText = 'ПІДКЛЮЧЕННЯ КАСИ...';
