@@ -926,7 +926,13 @@
                 elements = stripe.elements({ clientSecret });
                 
                 // Express Checkout (Apple Pay / Google Pay)
-                const expressCheckoutElement = elements.create('expressCheckout');
+                const expressCheckoutElement = elements.create('expressCheckout', {
+                    wallets: {
+                        applePay: 'auto',
+                        googlePay: 'auto',
+                        link: 'never' // Disable Link to prioritize Apple/Google Pay
+                    }
+                });
                 expressCheckoutElement.mount('#express-checkout-element');
 
                 const paymentElement = elements.create('payment', { layout: 'accordion' });
