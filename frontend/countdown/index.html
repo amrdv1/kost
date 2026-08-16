@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #000000;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #day-label {
+            font-size: 8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: -1rem;
+            letter-spacing: 0.05em;
+        }
+        #countdown {
+            font-size: 14rem;
+            font-weight: 900;
+            color: #ff0000;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            text-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="day-label">DAY 1</div>
+    <div id="countdown">00:00:00</div>
+
+    <script>
+        // === НАЛАШТУВАННЯ ЧАСУ ===
+
+        // Цільовий час: Середа, 19 серпня 2026, 20:00 за Британським часом (BST = UTC+1)
+        // Якщо потрібно на 00:00 - змініть 20:00:00 на 00:00:00
+        const targetDate = new Date("2026-08-19T20:00:00+01:00").getTime();
+        
+        // Початкова дата для розрахунку "DAY 1": Понеділок, 17 серпня 2026, 00:00 Британського часу
+        const startDate = new Date("2026-08-17T00:00:00+01:00").getTime();
+
+        const dayLabel = document.getElementById('day-label');
+        const countdownEl = document.getElementById('countdown');
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            
+            // Рахуємо який зараз день (1 день = 86400000 мілісекунд)
+            const elapsedMs = now - startDate;
+            let dayNumber = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 1;
+            
+            if (dayNumber < 1) dayNumber = 1;
+
+            dayLabel.innerText = `DAY ${dayNumber}`;
+
+            // Рахуємо зворотній відлік
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                countdownEl.innerText = "00:00:00";
+                return;
+            }
+
+            // Рахуємо загальну кількість годин (може бути більше 24)
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+
+            countdownEl.innerText = `${h}:${m}:${s}`;
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>

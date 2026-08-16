@@ -539,6 +539,7 @@ app.use(express.static(path.join(__dirname, 'frontend'), {
 
 // Routes
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'index.html')));
+app.get('/countdown', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'countdown', 'index.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'client', 'index.html')));
 
 // --- GRACEFUL SHUTDOWN ---
