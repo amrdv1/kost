@@ -406,11 +406,12 @@
             </div>
 
             <!-- Stripe Контейнер -->
-            <div id="payment-container">
+            <div id="payment-container" style="display: none;">
                 <button type="button" id="back-to-form-btn" class="pill-element"
                     style="margin-bottom: 1rem; background: var(--btn-bg); color: var(--text-main); font-size: 0.8rem; padding: 0.8rem;">
                     ⬅ ПОВЕРНУТИСЯ ДО ФОРМИ
                 </button>
+                <div id="express-checkout-element" style="margin-bottom: 1.5rem;"></div>
                 <div id="payment-element"></div>
             </div>
 
@@ -926,6 +927,11 @@
 
                 // --- РЕАЛЬНИЙ STRIPE КОД ---
                 elements = stripe.elements({ clientSecret });
+                
+                // Express Checkout (Apple Pay / Google Pay)
+                const expressCheckoutElement = elements.create('expressCheckout');
+                expressCheckoutElement.mount('#express-checkout-element');
+
                 const paymentElement = elements.create('payment', { layout: 'accordion' });
                 paymentElement.mount('#payment-element');
 
