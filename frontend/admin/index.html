@@ -765,7 +765,7 @@
         async function updateStatusDirectly(key, newVal) {
             try {
                 const token = sessionStorage.getItem('admin_token');
-                await fetch(`${API_URL}/admin/settings`, {
+                const res = await fetch(`${API_URL}/admin/settings`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -773,9 +773,24 @@
                     },
                     body: JSON.stringify({ key, value: newVal })
                 });
+                
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        alert('Сесія закінчилась або немає доступу. Будь ласка, увійдіть знову.');
+                        window.location.reload();
+                    } else {
+                        const err = await res.json();
+                        alert(`Помилка: ${err.error || 'Неможливо оновити статус'}`);
+                    }
+                    loadAlbumSettings(); // revert select
+                    return;
+                }
+                
                 loadAlbumSettings(); // Reload instantly to update colors
             } catch(e) {
                 console.error("Failed to update", e);
+                alert("Помилка з'єднання з сервером");
+                loadAlbumSettings();
             }
         }
 
