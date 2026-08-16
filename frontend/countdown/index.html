@@ -39,6 +39,9 @@
     <!-- Hidden start button: Top Left, small dark gray circle -->
     <div id="start-btn" style="position: absolute; top: 15px; left: 15px; width: 15px; height: 15px; background: #222; border-radius: 50%; cursor: pointer; z-index: 9999;" title="Start 72h Countdown"></div>
     
+    <!-- Hidden reset button: Top Right, small even darker circle -->
+    <div id="reset-btn" style="position: absolute; top: 15px; right: 15px; width: 15px; height: 15px; background: #111; border-radius: 50%; cursor: pointer; z-index: 9999;" title="Reset Countdown"></div>
+    
     <div id="day-label">DAY 1</div>
     <div id="countdown">00:00:00</div>
 
@@ -46,17 +49,26 @@
         const dayLabel = document.getElementById('day-label');
         const countdownEl = document.getElementById('countdown');
         const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
 
         const DURATION_MS = 72 * 60 * 60 * 1000; // 72 години
 
-        // Запуск по кліку на невидиму кнопку
+        // Запуск по кліку на невидиму кнопку (зліва)
         startBtn.addEventListener('click', () => {
-            // Перезаписуємо час старту тільки якщо користувач точно клікнув
             localStorage.setItem('countdown_start', Date.now());
-            // Додаємо візуальний фідбек (кнопка кліпне зеленим)
             startBtn.style.background = '#00ff00';
             setTimeout(() => { startBtn.style.background = '#222'; }, 500);
             updateTimer();
+        });
+
+        // Скидання по кліку на невидиму кнопку (справа)
+        resetBtn.addEventListener('click', () => {
+            if (confirm("Точно скинути таймер на 72:00:00?")) {
+                localStorage.removeItem('countdown_start');
+                resetBtn.style.background = '#ff0000';
+                setTimeout(() => { resetBtn.style.background = '#111'; }, 500);
+                updateTimer();
+            }
         });
 
         function updateTimer() {
