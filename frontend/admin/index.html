@@ -227,8 +227,20 @@
             gap: 20px;
             max-height: calc(100vh - 280px);
             overflow-y: auto;
-            padding-right: 10px;
-            padding-bottom: 20px;
+            padding-right: 0;
+            padding-bottom: 80px;
+            
+            /* Hide scrollbar */
+            scrollbar-width: none; 
+            -ms-overflow-style: none; 
+            
+            /* Smooth fade out at the bottom */
+            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        }
+        
+        .feed::-webkit-scrollbar {
+            display: none;
         }
 
         .donation-card {
