@@ -369,6 +369,23 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
+// --- TEMPORARY ENDPOINT TO FILL 50 SOUNDS ---
+app.get('/api/fill-50', async (req, res) => {
+  try {
+    for (let i = 1; i <= 50; i++) {
+      await pool.query(
+        `INSERT INTO donations (stripe_payment_id, customer_name, message, amount, audio_base64, audio_type, payment_status, audio_status) 
+         VALUES ($1, $2, $3, $4, $5, $6, 'PAID', 'APPROVED')`,
+        ['test_fill_' + Date.now() + '_' + i, 'Тест Донат ' + i, 'Фейк донат №' + i, 500, 'UklGRiQAAABXRUJN', 'audio/webm']
+      );
+    }
+    statusCache.lastUpdate = 0; // Invalidate cache
+    res.send('<h2>Успішно додано 50 звукових донатів!</h2><p>Можете закрити цю вкладку і перевірити ліміт на сайті.</p>');
+  } catch (error) {
+    res.status(500).send('Помилка: ' + error.message);
+  }
+});
+
 // --- ADMIN API ---
 
 const adminAuth = (req, res, next) => {
