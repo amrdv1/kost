@@ -1,7 +1,10 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const dbPath = path.join(__dirname, 'backend', 'donations.db');
-const db = new sqlite3.Database(dbPath);
+require('dotenv').config();
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgres://postgres:12345@localhost:5432/postgres",
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+});
 
 function getRandomString(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
@@ -12,39 +15,36 @@ function getRandomString(length) {
     return result;
 }
 
-// Simple base64 empty/dummy audio (a tiny valid wav is best, but even invalid audio works if we just want it to load visually)
-// We will use a very short valid base64 wav header just in case.
 const dummyAudio = "UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="; 
 
-db.serialize(() => {
-    // 3 Sound donations
-    for(let i=0; i<3; i++) {
-        const name = `@@DUMMY@@${getRandomString(8)}`;
-        const message = getRandomString(15);
-        db.run(`
-            INSERT INTO donations (customer_name, amount, message, audio_data, audio_type, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
-        `, [name, 500.0, message, dummyAudio, 'audio/wav'], function(err) {
-            if(err) console.error("Error inserting sound dummy:", err.message);
-            else console.log(`Inserted dummy sound donation ID ${this.lastID}`);
-        });
-    }
+async function seed() {
+    try {
+        // 3 Sound donations
+        for(let i=0; i<3; i++) {
+            const name = `@@DUMMY@@${getRandomString(8)}`;
+            const message = getRandomString(15);
+            await pool.query(`
+                INSERT INTO donations (customer_name, amount, message, audio_base64, audio_type, payment_status, audio_status)
+                VALUES ($1, $2, $3, $4, $5, 'PAID', 'APPROVED')
+            `, [name, 500.0, message, dummyAudio, 'audio/wav']);
+            console.log(`Inserted dummy sound donation ${i+1}`);
+        }
 
-    // 3 Normal donations
-    for(let i=0; i<3; i++) {
-        const name = getRandomString(10);
-        const message = getRandomString(20);
-        db.run(`
-            INSERT INTO donations (customer_name, amount, message, audio_data, audio_type, created_at)
-            VALUES (?, ?, ?, NULL, NULL, datetime('now'))
-        `, [name, 50.0, message], function(err) {
-            if(err) console.error("Error inserting normal dummy:", err.message);
-            else console.log(`Inserted dummy normal donation ID ${this.lastID}`);
-        });
+        // 3 Normal donations
+        for(let i=0; i<3; i++) {
+            const name = getRandomString(10);
+            const message = getRandomString(20);
+            await pool.query(`
+                INSERT INTO donations (customer_name, amount, message, payment_status, audio_status)
+                VALUES ($1, $2, $3, 'PAID', 'APPROVED')
+            `, [name, 50.0, message]);
+            console.log(`Inserted dummy normal donation ${i+1}`);
+        }
+    } catch(err) {
+        console.error(err);
+    } finally {
+        pool.end();
     }
-});
+}
 
-setTimeout(() => {
-    db.close();
-    console.log("Done inserting random dummy donations.");
-}, 1000);
+seed();
