@@ -778,7 +778,7 @@
         }
 
         const statusOptions = [
-            "Біт", "Демо", "Зведення", "Мастер", "Готово", "Оупен", "—"
+            "—", "Біт", "Демо", "Зведення", "Мастер", "Готово", "Оупен"
         ];
 
         function renderAlbumSettings(settings) {
@@ -802,7 +802,7 @@
                 if (item.id === 'cover') {
                     optionsList = ["—", "Готово"];
                 } else if (item.id === 'video') {
-                    optionsList = ["Знято", "Готово", "—"];
+                    optionsList = ["—", "Знято", "Готово"];
                 }
 
                 let optionsHtml = optionsList.map(opt => `<option value="${opt}" ${opt.toUpperCase() === vUpper ? 'selected' : ''}>${opt}</option>`).join('');
