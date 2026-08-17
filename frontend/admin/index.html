@@ -956,7 +956,20 @@
             }
         }
 
+        function hideDonationLocally(id, btnElement) {
+            let hidden = JSON.parse(localStorage.getItem('hidden_donations') || '[]');
+            if (!hidden.includes(id)) {
+                hidden.push(id);
+                localStorage.setItem('hidden_donations', JSON.stringify(hidden));
+            }
+            btnElement.closest('.donation-card').style.display = 'none';
+        }
+
         function addSoundToGrid(sound, isNew = false) {
+            // Check if hidden locally
+            const hidden = JSON.parse(localStorage.getItem('hidden_donations') || '[]');
+            if (hidden.includes(sound.id)) return;
+
             const isSoundDonation = sound.amount >= 500 && sound.audio_type;
             const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
             const grid = document.getElementById(targetGridId);
@@ -995,7 +1008,7 @@
 
             card.innerHTML = `
                 <div class="donation-header" style="position: relative; padding-right: 2rem;">
-                    <button onclick="this.closest('.donation-card').style.display='none'" title="Приховати донат" style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; line-height: 1; padding: 0 5px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#888'">&times;</button>
+                    <button onclick="hideDonationLocally('${sound.id}', this)" title="Приховати донат" style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; line-height: 1; padding: 0 5px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#888'">&times;</button>
                     <span class="donation-name">${displayName}</span>
                     <span class="donation-amount">${sound.amount || '?'} UAH</span>
                     <span class="donation-time">${timeString}</span>
