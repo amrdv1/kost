@@ -459,7 +459,7 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
                     <div>
-                        <h2 style="text-align: center; color: var(--text-main); font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em; font-size: 1.8rem;">ЗВУКОВІ ДОНАТИ</h2>
+                        <h2 style="text-align: center; color: var(--text-main); font-weight: 900; margin-bottom: 1.5rem; letter-spacing: 0.05em; font-size: 1.8rem;">ЗВУКОВІ ДОНАТИ <span id="sound-counter" style="color: var(--accent);">(00/50)</span></h2>
                         <div class="feed" id="voice-feed">
                             <div class="empty-state">Завантаження...</div>
                         </div>
@@ -1004,6 +1004,16 @@
                 grid.insertBefore(card, grid.firstChild);
             } else {
                 grid.appendChild(card);
+            }
+
+            // Update counter if it's a sound donation
+            if (isSoundDonation) {
+                const counterSpan = document.getElementById('sound-counter');
+                if (counterSpan) {
+                    const count = grid.querySelectorAll('.donation-card').length;
+                    const formattedCount = count.toString().padStart(2, '0');
+                    counterSpan.innerText = `(${formattedCount}/50)`;
+                }
             }
         }
 
