@@ -994,7 +994,8 @@
             }
 
             card.innerHTML = `
-                <div class="donation-header">
+                <div class="donation-header" style="position: relative; padding-right: 2rem;">
+                    <button onclick="this.closest('.donation-card').style.display='none'" style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; line-height: 1; padding: 0 5px;">&times;</button>
                     <span class="donation-name">${displayName}</span>
                     <span class="donation-amount">${sound.amount || '?'} UAH</span>
                     <span class="donation-time">${timeString}</span>
