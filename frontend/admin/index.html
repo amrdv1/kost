@@ -961,12 +961,20 @@
             const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
             const grid = document.getElementById(targetGridId);
 
+            let displayName = sound.customer_name;
+            let isDummy = false;
+            if (displayName && displayName.startsWith('@@DUMMY@@')) {
+                isDummy = true;
+                displayName = displayName.replace('@@DUMMY@@', '');
+            }
+
             // Remove empty state if present
             const emptyState = grid.querySelector('.empty-state');
             if (emptyState) emptyState.remove();
 
             const card = document.createElement('div');
             card.className = 'donation-card';
+            if (isDummy) card.classList.add('dummy-donation');
             if (isNew) {
                 card.classList.add('new-sound');
                 setTimeout(() => card.classList.remove('new-sound'), 10000);
@@ -987,7 +995,7 @@
 
             card.innerHTML = `
                 <div class="donation-header">
-                    <span class="donation-name">${sound.customer_name}</span>
+                    <span class="donation-name">${displayName}</span>
                     <span class="donation-amount">${sound.amount || '?'} UAH</span>
                     <span class="donation-time">${timeString}</span>
                 </div>
@@ -1009,7 +1017,7 @@
             if (isSoundDonation) {
                 const counterSpan = document.getElementById('sound-counter');
                 if (counterSpan) {
-                    const count = grid.querySelectorAll('.donation-card').length;
+                    const count = grid.querySelectorAll('.donation-card:not(.dummy-donation)').length;
                     const formattedCount = count.toString().padStart(2, '0');
                     counterSpan.innerText = `(${formattedCount}/50)`;
                 }
