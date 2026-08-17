@@ -550,42 +550,12 @@ app.post('/api/countdown/start', express.json(), async (req, res) => {
 });
 
 // DUMMY DONATION ENDPOINT
-app.get('/api/admin/insert-dummies', async (req, res) => {
+app.get('/api/admin/clear-old-dummies', async (req, res) => {
   try {
-    function getRandomString(length) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
-    const dummyAudio = "UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="; 
-
-    // 3 Sound donations
-    for(let i=0; i<3; i++) {
-        const name = `@@DUMMY@@${getRandomString(8)}`;
-        const message = getRandomString(15);
-        await pool.query(
-            `INSERT INTO donations (customer_name, amount, message, audio_base64, audio_type, payment_status, audio_status)
-             VALUES ($1, $2, $3, $4, $5, 'PAID', 'APPROVED')`,
-            [name, 500.0, message, dummyAudio, 'audio/wav']
-        );
-    }
-
-    // 3 Normal donations
-    for(let i=0; i<3; i++) {
-        const name = getRandomString(10);
-        const message = getRandomString(20);
-        await pool.query(
-            `INSERT INTO donations (customer_name, amount, message, payment_status, audio_status)
-             VALUES ($1, $2, $3, 'PAID', 'APPROVED')`,
-            [name, 50.0, message]
-        );
-    }
-
+    await pool.query(`DELETE FROM donations WHERE customer_name IN ('Оля', 'Макс', 'Степан', 'Анонім')`);
+    await pool.query(`DELETE FROM donations WHERE customer_name LIKE '@@DUMMY@@%'`);
     statusCache.lastUpdate = 0; // Invalidate cache
-    res.send('Success! 6 dummy donations added. They will appear on reload but will not broadcast on stream.');
+    res.send('Success! Old dummy donations (Оля, Макс, Степан, Анонім) have been removed from the database.');
   } catch (err) {
     res.status(500).send(err.message);
   }
