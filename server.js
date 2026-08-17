@@ -591,13 +591,14 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- STATIC FILES (with cache headers) ---
+// --- STATIC FILES (NO CACHE FOR DEV) ---
 
-app.use(express.static(path.join(__dirname, 'frontend'), {
-  maxAge: '1h',
-  etag: true,
-  lastModified: true
-}));
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  next();
+});
+
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Routes
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'frontend', 'admin', 'index.html')));
