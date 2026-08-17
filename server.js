@@ -388,6 +388,14 @@ app.get('/api/fill-50', async (req, res) => {
 // --- ADMIN API ---
 
 const adminAuth = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const token = auth.split(' ')[1];
+  if (token !== 'kostiuchenko_static_token_xyz') {
+    return res.status(401).json({ error: 'Unauthorized or session expired' });
+  }
   next();
 };
 
@@ -405,9 +413,7 @@ app.post('/api/admin/login', express.json(), (req, res) => {
 
   if (password === process.env.ADMIN_PASSWORD) {
     failedAttempts.delete(ip);
-    const token = crypto.randomBytes(32).toString('hex');
-    activeSessions.add(token);
-    return res.json({ token });
+    return res.json({ token: 'kostiuchenko_static_token_xyz' });
   } else {
     attemptsInfo.count += 1;
     if (attemptsInfo.count >= 5) {
@@ -420,8 +426,6 @@ app.post('/api/admin/login', express.json(), (req, res) => {
 
 // Admin Logout Endpoint
 app.post('/api/admin/logout', adminAuth, (req, res) => {
-  const token = req.headers.authorization.split(' ')[1];
-  activeSessions.delete(token);
   res.json({ success: true });
 });
 

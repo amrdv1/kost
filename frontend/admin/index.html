@@ -130,7 +130,13 @@
 
         /* ЕКРАН ЛОГІНУ */
         #login-screen {
-            display: none !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 2rem;
+            background: var(--bg-color);
         }
 
         #login-screen h1 {
@@ -190,7 +196,7 @@
 
         /* САУНДБОРД */
         #admin-panel {
-            display: block;
+            display: none;
             width: 100%;
         }
 
@@ -710,7 +716,7 @@
                 
                 const data = await res.json();
                 if (res.ok && data.token) {
-                    sessionStorage.setItem('admin_token', data.token);
+                    localStorage.setItem('admin_token', data.token);
                     document.getElementById('password').value = '';
                     showBoard();
                 } else {
@@ -725,7 +731,7 @@
         }
         
         async function logout() {
-            const token = sessionStorage.getItem('admin_token');
+            const token = localStorage.getItem('admin_token');
             if (token) {
                 try {
                     await fetch(`${API_URL}/admin/logout`, {
@@ -734,9 +740,9 @@
                     });
                 } catch(e) {}
             }
-            sessionStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_token');
             document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('password').value = '';
         }
 
@@ -894,7 +900,7 @@
             };
 
             btn.onclick = () => {
-                sessionStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_token');
                 window.location.reload();
             };
 
@@ -912,7 +918,7 @@
 
         async function updateStatusDirectly(key, newVal) {
             try {
-                const token = sessionStorage.getItem('admin_token');
+                const token = localStorage.getItem('admin_token');
                 const res = await fetch(`${API_URL}/admin/settings`, {
                     method: 'POST',
                     headers: { 
@@ -1058,8 +1064,10 @@
             }
         }
 
-        // Always show board since auth is removed
-        showBoard();
+        // Check if already logged in on load
+        if (localStorage.getItem('admin_token')) {
+            showBoard();
+        }
 
         // WAV Conversion Utility
         async function downloadAsWav(base64Audio, filename) {
