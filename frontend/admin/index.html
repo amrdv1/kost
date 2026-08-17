@@ -956,32 +956,6 @@
             }
         }
 
-        async function rejectDonation(id, btnElement) {
-            if (!confirm('Видалити цей донат назавжди?')) return;
-            try {
-                const token = localStorage.getItem('admin_token');
-                const res = await fetch(`${API_URL}/admin/moderate`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ donation_id: id, status: 'REJECTED' })
-                });
-                if (res.ok) {
-                    btnElement.closest('.donation-card').style.display = 'none';
-                    // Update counter manually if it's a sound donation by reloading the soundboard
-                    loadSoundboard();
-                } else {
-                    const err = await res.json();
-                    alert(`Помилка: ${err.error || 'Не вдалося видалити'}`);
-                }
-            } catch(e) {
-                console.error(e);
-                alert("Помилка з'єднання з сервером");
-            }
-        }
-
         function addSoundToGrid(sound, isNew = false) {
             const isSoundDonation = sound.amount >= 500 && sound.audio_type;
             const targetGridId = isSoundDonation ? 'voice-feed' : 'normal-feed';
@@ -1021,7 +995,7 @@
 
             card.innerHTML = `
                 <div class="donation-header" style="position: relative; padding-right: 2rem;">
-                    <button onclick="rejectDonation('${sound.id}', this)" title="Видалити донат" style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; line-height: 1; padding: 0 5px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#888'">&times;</button>
+                    <button onclick="this.closest('.donation-card').style.display='none'" title="Приховати донат" style="position: absolute; right: 0; top: 0; background: none; border: none; font-size: 1.5rem; color: #888; cursor: pointer; line-height: 1; padding: 0 5px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#888'">&times;</button>
                     <span class="donation-name">${displayName}</span>
                     <span class="donation-amount">${sound.amount || '?'} UAH</span>
                     <span class="donation-time">${timeString}</span>
