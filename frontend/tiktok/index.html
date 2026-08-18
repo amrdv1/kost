@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown TikTok</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        #top-label {
+            position: absolute;
+            top: 5vh;
+            font-size: 6vw; /* Scalable for wall stream */
+            font-weight: 900;
+            color: #ff0000;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+            text-align: center;
+            width: 100%;
+        }
+        #day-label {
+            font-size: 8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: -1rem;
+            letter-spacing: 0.05em;
+        }
+        #countdown {
+            font-size: 14rem;
+            font-weight: 900;
+            color: #ff0000;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            text-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hidden start button: Top Left, small dark gray circle -->
+    <div id="start-btn" style="position: absolute; top: 15px; left: 15px; width: 15px; height: 15px; background: #222; border-radius: 50%; cursor: pointer; z-index: 9999;" title="Start 72h Countdown"></div>
+    
+    <!-- Hidden reset button: Top Right, small even darker circle -->
+    <div id="reset-btn" style="position: absolute; top: 15px; right: 15px; width: 15px; height: 15px; background: #111; border-radius: 50%; cursor: pointer; z-index: 9999;" title="Reset Countdown"></div>
+    
+    <div id="top-label">kostiuchenko.co.uk</div>
+    <div id="day-label">DAY 1</div>
+    <div id="countdown">00:00:00</div>
+
+    <script>
+        const dayLabel = document.getElementById('day-label');
+        const countdownEl = document.getElementById('countdown');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        const DURATION_MS = 72 * 60 * 60 * 1000; // 72 години
+        let globalStartMs = null; // Зберігаємо час старту
+        let timeOffset = 0;
+
+        // Запуск по кліку на невидиму кнопку (зліва)
+        startBtn.addEventListener('click', async () => {
+            const now = Date.now() + timeOffset;
+            globalStartMs = now;
+            await fetch('/api/countdown/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ startTime: now })
+            });
+            startBtn.style.background = '#00ff00';
+            setTimeout(() => { startBtn.style.background = '#222'; }, 500);
+            renderTimer();
+        });
+
+        // Скидання по кліку на невидиму кнопку (справа)
+        resetBtn.addEventListener('click', async () => {
+            if (confirm("Точно скинути таймер на 72:00:00?")) {
+                globalStartMs = null;
+                await fetch('/api/countdown/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startTime: null })
+                });
+                resetBtn.style.background = '#ff0000';
+                setTimeout(() => { resetBtn.style.background = '#111'; }, 500);
+                renderTimer();
+            }
+        });
+
+        async function fetchStartTime() {
+            try {
+                const reqStart = Date.now();
+                const res = await fetch('/api/countdown');
+                const data = await res.json();
+                const reqEnd = Date.now();
+                
+                // Only set timeOffset once on first load to prevent jitter
+                if (timeOffset === 0 && data.serverNow) {
+                    const latency = (reqEnd - reqStart) / 2;
+                    const estimatedServerTime = data.serverNow + latency;
+                    timeOffset = estimatedServerTime - reqEnd;
+                }
+                
+                globalStartMs = data.startTime;
+            } catch (err) {
+                console.error('Помилка синхронізації часу', err);
+            }
+        }
+
+        function renderTimer() {
+            if (!globalStartMs) {
+                dayLabel.innerText = "DAY 1";
+                countdownEl.innerText = "72:00:00";
+                return;
+            }
+
+            const startMs = globalStartMs;
+            const now = Date.now() + timeOffset;
+            let elapsedMs = now - startMs;
+            if (elapsedMs < 0) elapsedMs = 0; // Prevent Day 0
+            
+            let dayNumber = Math.floor(elapsedMs / (24 * 60 * 60 * 1000)) + 1;
+            if (dayNumber > 3) dayNumber = 3;
+            dayLabel.innerText = `DAY ${dayNumber}`;
+
+            const targetDate = startMs + DURATION_MS;
+            let distance = targetDate - now;
+
+            if (distance <= 0) {
+                countdownEl.innerText = "00:00:00";
+                return;
+            }
+            if (distance > DURATION_MS) {
+                distance = DURATION_MS; // Cap at 72h max
+            }
+
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+
+            countdownEl.innerText = `${h}:${m}:${s}`;
+        }
+
+        setInterval(() => {
+            renderTimer();
+            if (new Date().getSeconds() % 2 === 0) fetchStartTime();
+        }, 1000);
+        
+        // Початкова ініціалізація
+        fetchStartTime().then(renderTimer);
+    </script>
+</body>
+</html>
